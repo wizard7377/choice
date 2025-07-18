@@ -1,0 +1,10 @@
+[custom.all.choice]
+type = "local"
+path = "."
+ipkg = "choice.ipkg"
+test = "test/test.ipkg"
+
+[custom.all.choice-test]
+type = "local"
+path = "test"
+ipkg = "test.ipkg"
