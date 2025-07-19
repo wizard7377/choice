@@ -20,14 +20,25 @@ MonadTrans Choice where
   lift = liftChoice
   
   
-lookChoice : Monad m => (Choice m a) -> Yield (Choice m) a
-lookChoice (MkChoice v) = MkChoice $ do 
-  v' <- v 
-  case v' of 
-    MNil => pure MNil
-    MCons x xs => 
-      (\y0 => \y1 => Just (y0, y1)) x <$> xs
-      
-Monad m => MonadChoice (Choice m) where
-  look = lookChoice
-  give = ?g
+(Monad m, Semigroup a) => Semigroup (Choice m a) where 
+  a <+> b = (<+>) <$> a <*> b
+  
+(Monad m, Monoid a) => Monoid (Choice m a) where 
+  neutral = pure neutral
+  
+ 
+(Monad m) => Alternative (Choice m) where 
+  empty = MkChoice $ pure MNil
+  a <|> b = appendChoice a b
+  
+(Foldable m, Monad m) => Foldable (Choice m) where
+  foldr f a (MkChoice c) = ?fold
+
+(Traversable m, Monad m) => Traversable (Choice m) where 
+  traverse f c = ?t
+[choiceAlt] MonadChoice m => Alternative m where 
+  empty = give $ pure Nothing
+  xl <|> yl = case (!(look xl)) of 
+    Nothing => yl
+    Just (x, xs) => give $ pure (Just (x, xs <|> yl))
+

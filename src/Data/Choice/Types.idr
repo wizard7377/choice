@@ -25,6 +25,25 @@ runChoice : Choice m a -> MList m a
 runChoice (MkChoice x) = x
 
 public export
-interface MonadChoice m where 
+interface (Functor m, Applicative m, Monad m) => MonadChoice m where 
+  ||| "Look" into the inner state of the monad
   look : forall a. m a -> Yield m a 
+  ||| "Give" into the inner state of the monad.
   give : forall a. Yield m a -> m a
+  ||| The Prolog cut, `!`, that is, if something yields some number of results make it yield one or zero
+  cut : forall a. m a -> m a
+  cut m = do 
+    m' <- look m
+    case m' of
+      Nothing => give $ pure Nothing
+      Just (v, _) => do 
+        e <- give $ pure Nothing
+        z <- give $ pure $ Just (v , e)
+        pure z
+
+  
+public export 
+ChoiceArrow : (Type -> Type) -> Type -> Type -> Type
+ChoiceArrow m a b = a -> (Choice m b)
+
+  

@@ -58,9 +58,8 @@ export
 appendChoice : forall a, m. Monad m => Choice m a -> Choice m a -> Choice m a
 appendChoice (MkChoice c0) (MkChoice c1) = MkChoice (appendMList c0 c1)
 joinChoice' : forall a, m. Monad m => MList m (Choice m a) -> MList m a
-joinChoice' c = do 
-  c' <- c
-  case c' of
+joinChoice' c = 
+  case !c of
         MNil => pure MNil
         MCons (MkChoice x) xs => 
           appendMList x (joinChoice' xs) 
@@ -74,3 +73,20 @@ joinChoice (MkChoice c) = MkChoice (joinChoice' c)
 export 
 liftChoice : Monad m => m a -> Choice m a
 liftChoice v = MkChoice (MCons <$> v <*> (pure $ pure MNil))
+
+foldChoice' : (Foldable m, Monad m) => (e -> a -> a) -> a -> MList m e -> m a
+foldChoice' f a c = 
+  case !c of
+    MNil => pure a
+    MCons y ys => foldChoice' f (f y a) ys
+export
+foldChoice : (Monoid a, Foldable m, Monad m) => (e -> a -> a) -> a -> Choice m e -> a
+foldChoice f a (MkChoice c) = let 
+  r = foldChoice' f a c 
+  in foldMap id r
+  
+
+export 
+traverseChoice' : (Applicative f, Traversable f, Traversable m, Monad m) => (a -> f b) -> MStep m a -> f (MStep m b)
+traverseChoice' f MNil = pure MNil
+traverseChoice' f (MCons x xs) = ?tc
