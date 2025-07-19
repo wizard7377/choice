@@ -1,6 +1,7 @@
 # Choice: The List Monad Transformer 
 
-(Note, the paper on this may be found at ?)
+(Note, the paper on this may be found [here](paper/main.pdf))
+
 A List Monad Transformer for Idris, intended for real world use.
 
 The interface for this consists of two main types, the `Choice` Monad transformer and the `MonadChoice` class.
