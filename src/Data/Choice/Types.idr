@@ -2,7 +2,7 @@ module Data.Choice.Types
 
 %default total
 public export 
-Yield : (Type -> Type) -> Type -> Type 
+Yield : (m : Type -> Type) -> (a : Type) -> Type 
 Yield m a = m (Maybe (a, m a))
   
 covering
@@ -14,15 +14,15 @@ public export
 MList : (Type -> Type) -> Type -> Type
 MList m a = m (MStep {k = Type} m a)
 public export 
-data Choice : (Type -> Type) -> Type -> Type where 
-    MkChoice : MList m a -> Choice m a
+data ChoiceT : (m : Type -> Type) -> (a : Type) -> Type where 
+    MkChoiceT : MList m a -> ChoiceT m a
   
 public export
-mkChoice : MList m a -> Choice m a
-mkChoice = MkChoice
+mkChoiceT : MList m a -> ChoiceT m a
+mkChoiceT = MkChoiceT
 public export
-runChoice : Choice m a -> MList m a
-runChoice (MkChoice x) = x
+runChoiceT : ChoiceT m a -> MList m a
+runChoiceT (MkChoiceT x) = x
 
 public export
 interface (Functor m, Applicative m, Monad m) => MonadChoice m where 
@@ -43,7 +43,15 @@ interface (Functor m, Applicative m, Monad m) => MonadChoice m where
 
   
 public export 
-ChoiceArrow : (Type -> Type) -> Type -> Type -> Type
-ChoiceArrow m a b = a -> (Choice m b)
+ChoiceTArrow : (Type -> Type) -> Type -> Type -> Type
+ChoiceTArrow m a b = a -> (ChoiceT m b)
 
   
+public export 
+Choice : Type -> Type
+Choice = ChoiceT id
+
+  
+public export 
+Context : (t : (Type -> Type) -> Type -> Type) -> (m : Type -> Type) -> (a : Type) -> Type
+Context t m a = t (ChoiceT m) a

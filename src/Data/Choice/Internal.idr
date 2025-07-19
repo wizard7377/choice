@@ -50,43 +50,69 @@ bindList f c = do
   r1
 
 export
-bindChoice : forall a, b, m. Monad m => (a -> Choice m b) -> Choice m a -> Choice m b
-bindChoice f (MkChoice c) = MkChoice $ (bindList (runChoice . f) c)
+bindChoiceT : forall a, b, m. Monad m => (a -> ChoiceT m b) -> ChoiceT m a -> ChoiceT m b
+bindChoiceT f (MkChoiceT c) = MkChoiceT $ (bindList (runChoiceT . f) c)
 
   
 export 
-appendChoice : forall a, m. Monad m => Choice m a -> Choice m a -> Choice m a
-appendChoice (MkChoice c0) (MkChoice c1) = MkChoice (appendMList c0 c1)
-joinChoice' : forall a, m. Monad m => MList m (Choice m a) -> MList m a
-joinChoice' c = 
+appendChoiceT : forall a, m. Monad m => ChoiceT m a -> ChoiceT m a -> ChoiceT m a
+appendChoiceT (MkChoiceT c0) (MkChoiceT c1) = MkChoiceT (appendMList c0 c1)
+joinChoiceT' : forall a, m. Monad m => MList m (ChoiceT m a) -> MList m a
+joinChoiceT' c = 
   case !c of
         MNil => pure MNil
-        MCons (MkChoice x) xs => 
-          appendMList x (joinChoice' xs) 
+        MCons (MkChoiceT x) xs => 
+          appendMList x (joinChoiceT' xs) 
 
  
 
 export 
-joinChoice : forall a, m. Monad m => Choice m (Choice m a) -> Choice m a
-joinChoice (MkChoice c) = MkChoice (joinChoice' c)
+joinChoiceT : forall a, m. Monad m => ChoiceT m (ChoiceT m a) -> ChoiceT m a
+joinChoiceT (MkChoiceT c) = MkChoiceT (joinChoiceT' c)
 
 export 
-liftChoice : Monad m => m a -> Choice m a
-liftChoice v = MkChoice (MCons <$> v <*> (pure $ pure MNil))
+liftChoiceT : Monad m => m a -> ChoiceT m a
+liftChoiceT v = MkChoiceT (MCons <$> v <*> (pure $ pure MNil))
 
-foldChoice' : (Foldable m, Monad m) => (e -> a -> a) -> a -> MList m e -> m a
-foldChoice' f a c = 
-  case !c of
-    MNil => pure a
-    MCons y ys => foldChoice' f (f y a) ys
-export
-foldChoice : (Monoid a, Foldable m, Monad m) => (e -> a -> a) -> a -> Choice m e -> a
-foldChoice f a (MkChoice c) = let 
-  r = foldChoice' f a c 
-  in foldMap id r
+foldMapChoiceT' : Monoid b => Monad m => Foldable m => (a -> b) -> MList m a -> b
+foldMapChoiceT' f t = foldMap id $ do 
+  t' <- t 
+  (case t' of
+    MNil => pure $ neutral 
+    MCons y ys => pure $ f y <+> (foldMapChoiceT' f ys))
   
+  
+private 
+[funcSemi] Semigroup (a -> a) where 
+  (<+>) = (.)
+private
+[funcMono] Monoid (a -> a) using funcSemi where 
+  neutral = id
+private
+helpFold : Monoid (c -> c) => Monad m => Foldable m => (a -> (c -> c)) -> MList m a -> (c -> c)
+helpFold = foldMapChoiceT'
+foldrChoiceT' : Monad m => Foldable m => (a -> b -> b) -> b -> MList m a -> b
+foldrChoiceT' f a c = (helpFold @{funcMono} f c) a
+  
+public export 
+foldrChoiceT : Monad m => Foldable m => (a -> b -> b) -> b -> ChoiceT m a -> b
+foldrChoiceT f a (MkChoiceT c) = (foldrChoiceT' f a c)
 
-export 
-traverseChoice' : (Applicative f, Traversable f, Traversable m, Monad m) => (a -> f b) -> MStep m a -> f (MStep m b)
-traverseChoice' f MNil = pure MNil
-traverseChoice' f (MCons x xs) = ?tc
+mutual
+    export 
+    traverseStep : (Traversable m, Monad m, Applicative f) => (a -> f b) -> MStep m a -> f (MStep m b)
+    traverseStep f (MCons x xs) =
+        let
+            y0 = f x
+            y1 = traverseList f xs
+        in
+        MCons <$> y0 <*> y1
+    traverseStep f MNil = pure MNil
+    traverseList : (Traversable m, Monad m, Applicative f) => (a -> f b) -> MList m a -> f (MList m b)
+    traverseList f = traverse (traverseStep f)
+
+public export
+traverseChoiceT : (Traversable m, Monad m, Applicative f) => (a -> f b) -> ChoiceT m a -> f (ChoiceT m b)
+traverseChoiceT f (MkChoiceT m) = MkChoiceT <$> traverseList f m
+
+

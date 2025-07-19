@@ -1,4 +1,5 @@
 module Main
 
+import Test.Test
 main : IO ()
-main = putStrLn "Test successful!"
+main = testMain
