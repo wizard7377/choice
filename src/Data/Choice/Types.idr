@@ -1,9 +1,11 @@
 module Data.Choice.Types
 
+%default total
 public export 
 Yield : (Type -> Type) -> Type -> Type 
 Yield m a = m (Maybe (a, m a))
   
+covering
 public export 
 data MStep : forall k. (k -> Type) -> k -> Type where 
     MNil : MStep m a
@@ -22,6 +24,7 @@ public export
 runChoice : Choice m a -> MList m a
 runChoice (MkChoice x) = x
 
+public export
 interface MonadChoice m where 
-  clook : forall a. m a -> Yield m a 
-  crefl : forall a. Yield m a -> m a
+  look : forall a. m a -> Yield m a 
+  give : forall a. Yield m a -> m a

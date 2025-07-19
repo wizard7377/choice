@@ -52,3 +52,25 @@ bindList f c = do
 export
 bindChoice : forall a, b, m. Monad m => (a -> Choice m b) -> Choice m a -> Choice m b
 bindChoice f (MkChoice c) = MkChoice $ (bindList (runChoice . f) c)
+
+  
+export 
+appendChoice : forall a, m. Monad m => Choice m a -> Choice m a -> Choice m a
+appendChoice (MkChoice c0) (MkChoice c1) = MkChoice (appendMList c0 c1)
+joinChoice' : forall a, m. Monad m => MList m (Choice m a) -> MList m a
+joinChoice' c = do 
+  c' <- c
+  case c' of
+        MNil => pure MNil
+        MCons (MkChoice x) xs => 
+          appendMList x (joinChoice' xs) 
+
+ 
+
+export 
+joinChoice : forall a, m. Monad m => Choice m (Choice m a) -> Choice m a
+joinChoice (MkChoice c) = MkChoice (joinChoice' c)
+
+export 
+liftChoice : Monad m => m a -> Choice m a
+liftChoice v = MkChoice (MCons <$> v <*> (pure $ pure MNil))
