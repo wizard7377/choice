@@ -4,3 +4,4 @@ build/
 paper/*
 !paper/*.tex 
 !paper/*.bib
+!paper/main.pdf

@@ -103,11 +103,14 @@ data MStep : (Type -> Type) -> Type -> Type where
 
 public export 
 data ChoiceT : (Type -> Type) -> Type -> Type where 
-	MkChoice : m (MStep m a) -> Choice m a
+	MkChoiceT : m (MStep m a) -> ChoiceT m a
 	
 \end{minted}
 \footnote{The package itself creates a helper type alias, \textrm{MList}, and has \textrm{MStep} be kind polymorhpic.
 	For simplicites sake, these are both changed to improve readability.}
 	
 In short, \verb|ChoiceT| works by allowing for "delimited continuations in lists".
-That is, while in a regular list you can retrive values until you get to the end of the list (which allows you to have arbitrarly long list pattern matches) \verb|MStep| wraps each succesive action in 
+That is, while in a regular list you can retrive values until you get to the end of the list (which allows you to have arbitrarly long list pattern matches) \verb|MStep| wraps each succesive action in a monadic context, \verb|m|.
+
+Note also that because of how they are defined, \verb|MStep| does \emph{not} have any context on its first value.
+This is where \verb|MkChoiceT| comes in, allowing 
