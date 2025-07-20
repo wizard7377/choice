@@ -32,11 +32,16 @@ Monad m => Functor (MList m) where
   map f c = do 
     c' <- c
     let c2 = forceList c'
-    ?h4
+    let c3 = mapMStep f c2
+    pure $ delay $ c3
 public export
 Monad m => Functor (MList m) => Applicative (MList m) where 
   pure = pure . delay . pure
-  f <*> c = ?h3 $ appMStep <$> (forceList <$> f) <*> (forceList <$> c)
+  f <*> c = do
+    f' <- forceList <$> f
+    c' <- forceList <$> c
+    let r = appMStep f' c'
+    pure $ delay $ r
 public export
 MonadTrans ChoiceT where 
   lift = liftChoiceT
@@ -88,8 +93,7 @@ private
 giveChoice : Monad m => Yield (ChoiceT m) a -> ChoiceT m a
 giveChoice c = case !c of 
   Nothing => MkChoiceT $ pure $ delay MNil 
-  --Just (x, xs) => (MkChoiceT $ pure (MCons x $ pure $ lateMNil)) <|> (xs)
-  _ => ?h5
+  Just (x,MkChoiceT xs) => ?h4
 public export
 Monad m => MonadChoice (ChoiceT m) where 
   look = lookChoice
