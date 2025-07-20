@@ -94,14 +94,12 @@ The \verb|ChoiceT| monad transformer is defined in terms of one other type, \ver
 
 \begin{minted}{idris}
 	
-%default total
-covering
-public export 
+
+
 data MStep : (Type -> Type) -> Type -> Type where 
 	MNil : MStep m a
 	MCons : a -> m (MStep m a) -> MStep m a
 
-public export 
 data ChoiceT : (Type -> Type) -> Type -> Type where 
 	MkChoiceT : m (MStep m a) -> ChoiceT m a
 	
@@ -113,4 +111,15 @@ In short, \verb|ChoiceT| works by allowing for "delimited continuations in lists
 That is, while in a regular list you can retrive values until you get to the end of the list (which allows you to have arbitrarly long list pattern matches) \verb|MStep| wraps each succesive action in a monadic context, \verb|m|.
 
 Note also that because of how they are defined, \verb|MStep| does \emph{not} have any context on its first value.
-This is where \verb|MkChoiceT| comes in, allowing 
+This is where \verb|MkChoiceT| comes in, allowing us to "wrap" \verb|MStep| itself in the monadic context, thereby creating a true list monad.
+
+\begin{lem}
+	For any $(m : \ty \to \ty)$, if $m$ is a functor, then so is $\verb|MStep| \ m$
+\end{lem}
+\begin{proof}
+	
+\end{proof}
+\begin{thm}
+	For any $(m : \ty \to \ty)$, if $m$ is a functor, then so is $\verb|ChoiceT| \ m$
+\end{thm}
+	

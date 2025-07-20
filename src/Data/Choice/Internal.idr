@@ -43,6 +43,7 @@ appMStep (MCons f fs) (MCons x xs) = MCons (f x) $ do
   rC
   
 
+export
 bindList : forall a, b, m. Monad m => (a -> MList m b) -> MList m a -> MList m b
 bindList f c = do
   r0 <- mapMStep f <$> c
@@ -114,5 +115,6 @@ mutual
 public export
 traverseChoiceT : (Traversable m, Monad m, Applicative f) => (a -> f b) -> ChoiceT m a -> f (ChoiceT m b)
 traverseChoiceT f (MkChoiceT m) = MkChoiceT <$> traverseList f m
+
 
 

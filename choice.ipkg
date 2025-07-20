@@ -16,7 +16,7 @@ authors = "Asher Frost"
 -- depends =
 
 -- modules to install
-modules = Data.Choice, Data.Choice.Types, Data.Choice.Instances, Data.Choice.Internal, Data.Choice.Combinators, Data.Choice.Proof
+modules = Data.Choice, Data.Simple, Data.Choice.Types, Data.Choice.Instances, Data.Choice.Internal, Data.Choice.Combinators, Data.Choice.Proof, Data.Simple
 
 -- main file (i.e. file to load at REPL)
 -- main =

@@ -1,4 +1,7 @@
 module Test.Test
-
+import Test.Groups.Simple
+public export
 testMain : IO ()
-testMain = pure ()
+testMain = do 
+  simpleTestA 
+  pure ()

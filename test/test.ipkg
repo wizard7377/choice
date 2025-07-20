@@ -16,7 +16,7 @@ authors = "Asher Frost"
 depends = choice
 
 -- modules to install
--- modules =
+-- modules = Test.Test, Test.Groups, Test.Helper, Test.Choice, Test.Groups.Simple
 
 -- main file (i.e. file to load at REPL)
 main = Main
