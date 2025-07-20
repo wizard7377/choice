@@ -10,17 +10,17 @@ covering
 public export 
 data MStep : forall k. (k -> Type) -> k -> Type where 
     MNil : MStep m a
-    MCons : a -> m (MStep m a) -> MStep m a
+    MCons : a -> m (Lazy (MStep m a)) -> MStep m a
 public export 
 MList : (Type -> Type) -> Type -> Type
-MList m a = m (MStep {k = Type} m a)
+MList m a = m (Lazy (MStep {k = Type} m a))
 
 ||| The core List Monad Transformer
 ||| Fundementally, this behaves as a wrapper around a list with monadic actions at each cons application
 ||| Thereby, the inner monad is the global state.
 ||| Somewhat confusingly, to get local state, we must do 
-||| @m the inner monad 
-||| @a the result
+||| @ m the inner monad 
+||| @ a the result
 public export 
 data ChoiceT : (m : Type -> Type) -> (a : Type) -> Type where 
     MkChoiceT : MList m a -> ChoiceT m a
@@ -37,7 +37,7 @@ consumeChoiceT : Monad m => ChoiceT m a -> m (List a)
 consumeChoiceT (MkChoiceT x) = case !x of
     MNil => pure []
     MCons v xs => do
-      rest <- consumeChoiceT $ MkChoiceT xs
+      rest <- consumeChoiceT $ MkChoiceT $ force xs
       pure (v :: rest)  
 public export
 interface (Functor m, Applicative m, Monad m) => MonadChoice m where 
@@ -70,3 +70,19 @@ Choice = ChoiceT Simple
 public export 
 Context : (t : (Type -> Type) -> Type -> Type) -> (m : Type -> Type) -> (a : Type) -> Type
 Context t m a = t (ChoiceT m) a
+
+  
+covering
+public export 
+lateMNil : Lazy (MStep m a)
+lateMNil = delay MNil
+ 
+covering
+public export 
+forceList : Lazy (MStep m a) -> MStep m a
+forceList = force
+covering
+public export 
+delayList : MStep m a -> Lazy (MStep m a)
+delayList = delay
+

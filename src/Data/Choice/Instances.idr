@@ -9,8 +9,9 @@ Monad f => Functor (ChoiceT f) where
 
 public export
 Monad m => Applicative (ChoiceT m) where 
-  pure = MkChoiceT . pure . pureMStep
-  (MkChoiceT f) <*> (MkChoiceT c) = MkChoiceT $ appMStep <$> f <*> c 
+  pure = MkChoiceT . pure . delay . pureMStep
+  a <*> b = ?h6
+  --(MkChoiceT f) <*> (MkChoiceT c) = MkChoiceT $ appMStep <$> f <*> c 
   
 public export
 partial
@@ -28,11 +29,14 @@ Monad m => Applicative (MStep m) where
   f <*> c = appMStep f c
 public export
 Monad m => Functor (MList m) where 
-  map f c = map f <$> c
+  map f c = do 
+    c' <- c
+    let c2 = forceList c'
+    ?h4
 public export
 Monad m => Functor (MList m) => Applicative (MList m) where 
-  pure = pure . pure
-  f <*> c = appMStep <$> f <*> c
+  pure = pure . delay . pure
+  f <*> c = ?h3 $ appMStep <$> (forceList <$> f) <*> (forceList <$> c)
 public export
 MonadTrans ChoiceT where 
   lift = liftChoiceT
@@ -47,7 +51,7 @@ public export
  
 public export
 (Monad m) => Alternative (ChoiceT m) where 
-  empty = MkChoiceT $ pure MNil
+  empty = MkChoiceT $ pure $ delay MNil
   a <|> b = appendChoiceT a b
   
 public export
@@ -72,19 +76,20 @@ lookChoice : (Applicative m, Monad m) => ChoiceT m a -> Yield (ChoiceT m) a
 lookChoice (MkChoiceT c) = MkChoiceT $ do 
   c' <- c
   case c' of 
-    MNil => pure MNil
+    MNil => pure $ delay MNil
     MCons x xs => do 
         xs' : MStep m a <- xs
         pure $ case xs' of
-            MNil => MCons (Just (x, empty)) $ pure MNil
-            MCons y ys => (MCons (Just (x, MkChoiceT xs)) $ pure MNil)
+            MNil => MCons (Just (x, empty)) $ pure $ delay MNil
+            MCons y ys => (MCons (Just (x, MkChoiceT xs)) $ pure $ delay MNil)
   
 -- TODO: Cleanup
 private
 giveChoice : Monad m => Yield (ChoiceT m) a -> ChoiceT m a
 giveChoice c = case !c of 
-  Nothing => MkChoiceT $ pure MNil 
-  Just (x, xs) => (MkChoiceT $ pure (MCons x $ pure MNil)) <|> (xs)
+  Nothing => MkChoiceT $ pure $ delay MNil 
+  --Just (x, xs) => (MkChoiceT $ pure (MCons x $ pure $ lateMNil)) <|> (xs)
+  _ => ?h5
 public export
 Monad m => MonadChoice (ChoiceT m) where 
   look = lookChoice

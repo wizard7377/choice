@@ -21,9 +21,12 @@ testRefc: installRefc
 	@echo "Running tests with reference counting... (RefC)"
 	@echo ""
 	idris2 --build test/test.ipkg --cg refc
-	pack run test/test.ipkg --cg refc
+	pack --cg refc run test/test.ipkg
 
 testAll: test testRefc
 
+docs: install 
+	pack --with-docs install choice 
+	cp -r build/docs docs
 clean: 
 	

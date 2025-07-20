@@ -1,33 +1,34 @@
 module Data.Choice.Internal
 import Data.Choice.Types
 
+%auto_lazy on
 
 mutual 
     export
-    appendMList : Monad m => MList m a -> MList m a -> MList m a
-    appendMList xs ys = (`appendMList'` ys) =<< xs
+    appendMList : forall m, a. Monad m => (MList m a) -> (MList m a) -> MList m a
+    appendMList xs ys =  ((flip appendMList') (ys)) =<< (force <$> xs)
     export
-    appendMList' : Monad m => MStep m a -> MList m a -> MList m a
+    appendMList' : forall m, a. Monad m => (MStep m a) -> (MList m a) -> MList m a
     appendMList' MNil ys = ys
-    appendMList' (MCons x xs) ys = pure $ MCons x (appendMList xs ys)
+    appendMList' (MCons x xs) ys = pure $ delay $ MCons x ( (appendMList xs ys))
 
 mutual 
     export
     joinMList : Monad m => MList m (MList m a) -> MList m a 
-    joinMList = (=<<) joinMList'
+    joinMList c = joinMList' =<< (force <$> c)
     export
     joinMList' : Monad m => MStep m (MList m a) -> MList m a
-    joinMList' MNil = pure MNil
-    joinMList' (MCons x xs) = appendMList x (joinMList xs)
+    joinMList' MNil = pure $ delay MNil
+    joinMList' (MCons x xs) = appendMList x (joinMList $ delay xs)
 
 export
-mapMStep : Monad m => (a -> b) -> MStep m a -> MStep m b
+mapMStep : Monad m => (a -> b) -> Lazy (MStep m a) -> Lazy (MStep m b)
 mapMStep _ MNil = MNil
 mapMStep f (MCons x xs) = MCons (f x) (mapMStep f <$> xs)
  
 export
 pureMStep : Monad m => a -> MStep m a 
-pureMStep v = MCons v $ pure MNil
+pureMStep v = MCons v $ pure $ delay MNil
 export
 appMStep : forall a, b, m. (Monad m) => MStep m (a -> b) -> MStep m a -> MStep m b
 appMStep MNil _ = MNil
@@ -38,8 +39,8 @@ appMStep (MCons f fs) (MCons x xs) = MCons (f x) $ do
   let r1 = mapMStep f xs'
   let r2 = appMStep fs' (pureMStep x)
   let r3 = appMStep fs' xs'
-  let rB = appendMList' r1 $ pure r2
-  let rC = appendMList rB $ pure r3
+  let rB = appendMList' r1 $ pure $ delay r2
+  let rC = appendMList rB $ pure $ delay r3
   rC
   
 
@@ -61,7 +62,7 @@ appendChoiceT (MkChoiceT c0) (MkChoiceT c1) = MkChoiceT (appendMList c0 c1)
 joinChoiceT' : forall a, m. Monad m => MList m (ChoiceT m a) -> MList m a
 joinChoiceT' c = 
   case !c of
-        MNil => pure MNil
+        MNil => pure $ delay MNil
         MCons (MkChoiceT x) xs => 
           appendMList x (joinChoiceT' xs) 
 
@@ -72,8 +73,11 @@ joinChoiceT : forall a, m. Monad m => ChoiceT m (ChoiceT m a) -> ChoiceT m a
 joinChoiceT (MkChoiceT c) = MkChoiceT (joinChoiceT' c)
 
 export 
-liftChoiceT : Monad m => m a -> ChoiceT m a
-liftChoiceT v = MkChoiceT (MCons <$> v <*> (pure $ pure MNil))
+liftChoiceT : forall m, a. Monad m => m a -> ChoiceT m a
+liftChoiceT v = MkChoiceT $ do
+  let r0 : (Lazy (MStep m a)) = delay MNil 
+  v' <- v
+  pure $ delay $ MCons v' (pure r0)
 
 foldMapChoiceT' : Monoid b => Monad m => Foldable m => (a -> b) -> MList m a -> b
 foldMapChoiceT' f t = foldMap id $ do 
@@ -99,18 +103,25 @@ public export
 foldrChoiceT : Monad m => Foldable m => (a -> b -> b) -> b -> ChoiceT m a -> b
 foldrChoiceT f a (MkChoiceT c) = (foldrChoiceT' f a c)
 
+twofmap : Functor f => Functor g => (a -> b) -> f (g a) -> (f (g b))
+twofmap h a = (map (map h) a)
 mutual
     export 
-    traverseStep : (Traversable m, Monad m, Applicative f) => (a -> f b) -> MStep m a -> f (MStep m b)
+    traverseStep : (Traversable m, Monad m, Applicative t) => (a -> t b) -> MStep m a -> t (MStep m b)
     traverseStep f (MCons x xs) =
         let
             y0 = f x
             y1 = traverseList f xs
         in
-        MCons <$> y0 <*> y1
+        MCons <$> ( y0) <*> y1
     traverseStep f MNil = pure MNil
-    traverseList : (Traversable m, Monad m, Applicative f) => (a -> f b) -> MList m a -> f (MList m b)
-    traverseList f = traverse (traverseStep f)
+    traverseList : (Traversable m, Monad m, Applicative t) => (a -> t b) -> MList m a -> t (MList m b)
+    traverseList f c = sequence $ do 
+      c' <- c
+      let x = traverseStep f c'
+      let y = delay <$> x
+      pure y
+      --delay <$> x
 
 public export
 traverseChoiceT : (Traversable m, Monad m, Applicative f) => (a -> f b) -> ChoiceT m a -> f (ChoiceT m b)
