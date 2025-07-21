@@ -2,9 +2,9 @@ package choice
 version = 0.1.0
 authors = "Asher Frost"
 -- maintainers =
--- license =
--- brief =
--- readme =
+license = "BSD-2-Clause"
+brief = "A choice monad transformer for Idris2"
+readme = "README.md"
 -- homepage =
 -- sourceloc =
 -- bugtracker =
@@ -16,7 +16,13 @@ authors = "Asher Frost"
 -- depends =
 
 -- modules to install
-modules = Data.Choice, Data.Simple, Data.Choice.Types, Data.Choice.Instances, Data.Choice.Internal, Data.Choice.Combinators, Data.Choice.Proof, Data.Simple
+modules =
+	Data.Simple,
+	Data.Choice,
+	Data.Choice.Types,
+	Data.Choice.Instances,
+	Data.Choice.Combinators,
+	Data.Choice.Proof
 
 -- main file (i.e. file to load at REPL)
 -- main =

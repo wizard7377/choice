@@ -4,14 +4,26 @@ import Data.Choice.Internal
 import Control.Monad.Trans
 import Control.Monad.State
 --%default total
+  
 public export
 Monad f => Functor (ChoiceT f) where 
-  map f (MkChoiceT c) = MkChoiceT $ mapMStep f <$> c
+  map f (MkChoiceT c) = MkChoiceT $ do 
+    c' <- c
+    case c' of 
+      Nothing => pure Nothing 
+      Just v => pure $ Just $ mapMStep f v
 
 public export
 Monad m => Applicative (ChoiceT m) where 
-  pure = MkChoiceT . pure . pureMStep
-  (MkChoiceT f) <*> (MkChoiceT c) = MkChoiceT $ appMStep <$> f <*> c 
+  pure = MkChoiceT . pure . Just . pureMStep
+  (MkChoiceT f) <*> (MkChoiceT c) = MkChoiceT $ do 
+    f' <- f 
+    c' <- c 
+    case f' of 
+      Nothing => pure Nothing
+      Just f'' => case c' of 
+        Nothing => pure Nothing
+        Just c'' => pure $ Just $ appMStep f'' c'' 
   
 public export
 partial
@@ -29,11 +41,14 @@ Monad m => Applicative (MStep m) where
   f <*> c = appMStep f c
 public export
 Monad m => Functor (MList m) where 
-  map f c = map f <$> c
+  map f c =  
+    case !c of 
+      Nothing => pure $ Nothing
+      Just v => pure $ Just $ f <$> v
 public export
 Monad m => Functor (MList m) => Applicative (MList m) where 
-  pure = pure . pure
-  f <*> c = appMStep <$> f <*> c
+  pure = pure . Just . pure
+  f <*> c = ?aml
 public export
 MonadTrans ChoiceT where 
   lift = liftChoiceT
@@ -48,7 +63,7 @@ public export
  
 public export
 (Monad m) => Alternative (ChoiceT m) where 
-  empty = MkChoiceT $ pure MNil
+  empty = MkChoiceT $ pure $ Nothing
   a <|> b = appendChoiceT a b
   
 public export
@@ -73,19 +88,19 @@ lookChoice : (Applicative m, Monad m) => ChoiceT m a -> Yield (ChoiceT m) a
 lookChoice (MkChoiceT c) = MkChoiceT $ do 
   c' <- c
   case c' of 
-    MNil => pure MNil
-    MCons x xs => do 
+    Just (MOne x) => pure MOne
+    MApp x xs => do 
         xs' : MStep m a <- xs
         pure $ case xs' of
-            MNil => MCons (Just (x, empty)) $ pure MNil
-            MCons y ys => (MCons (Just (x, MkChoiceT xs)) $ pure MNil)
+            MOne => MApp (Just (x, empty)) $ pure MOne
+            MApp y ys => (MApp (Just (x, MkChoiceT xs)) $ pure MOne)
   
 -- TODO: Cleanup
 private
 giveChoice : Monad m => Yield (ChoiceT m) a -> ChoiceT m a
 giveChoice c = case !c of 
-  Nothing => MkChoiceT $ pure MNil 
-  Just (x, xs) => (MkChoiceT $ pure (MCons x $ pure MNil)) <|> (xs)
+  Nothing => MkChoiceT $ pure MOne 
+  Just (x, xs) => (MkChoiceT $ pure (MApp x $ pure MOne)) <|> (xs)
 public export
 Monad m => MonadChoice (ChoiceT m) where 
   look = lookChoice

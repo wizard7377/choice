@@ -9,11 +9,15 @@ Yield m a = m (Maybe (a, m a))
 covering
 public export 
 data MStep : forall k. (k -> Type) -> k -> Type where 
-    MNil : MStep m a
-    MCons : a -> m (MStep m a) -> MStep m a
+    MOne : a -> MStep m a
+    MApp : MStep m a -> m (MStep m a) -> MStep m a
 public export 
 MList : (Type -> Type) -> Type -> Type
-MList m a = m (MStep {k = Type} m a)
+MList m a = m (Maybe (MStep {k = Type} m a))
+
+public export 
+MList1 : (Type -> Type) -> Type -> Type
+MList1 m a = m (MStep {k = Type} m a)
 
 ||| The core List Monad Transformer
 ||| Fundementally, this behaves as a wrapper around a list with monadic actions at each cons application
@@ -35,10 +39,13 @@ runChoiceT (MkChoiceT x) = x
 public export covering
 consumeChoiceT : Monad m => ChoiceT m a -> m (List a)
 consumeChoiceT (MkChoiceT x) = case !x of
-    MNil => pure []
-    MCons v xs => do
-      rest <- consumeChoiceT $ MkChoiceT xs
-      pure (v :: rest)  
+    Nothing => pure []
+    Just (MOne v) => pure [v]
+    Just (MApp v xs) => do
+      start <- consumeChoiceT $ MkChoiceT $ pure $ Just v
+      rest <- consumeChoiceT $ MkChoiceT $ Just <$> xs
+      ?h0
+      --pure (v ++ rest)  
 public export
 interface (Functor m, Applicative m, Monad m) => MonadChoice m where 
   ||| "Look" into the inner state of the monad
