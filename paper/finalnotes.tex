@@ -1,10 +1,41 @@
 \appendix 
 
+\section{Mathematical Symbols}
+
+\begin{tabular}{|c|c|}
+	\hline
+	Name & Symbol \\
+	\hline
+	\hline
+	\verb|Functor| & \hfe \\
+	\hline
+	\verb|Applicative| & \hayin \\
+	\hline
+	\verb|Monad| & \hmem \\
+	\hline
+	\verb|MonadTrans| & \htet \\
+	\hline
+	\verb|Foldable|\footnote{Catamorphism} & \hkaf \\
+	\hline
+	\verb|Traversable| & \htav \\
+	\hline
+	\verb|Semigroup| & \hsamekh \\
+	\hline 
+	\verb|MStep| & \hnun \\
+	\hline 
+	\verb|ChoiceT|\footnote{See Semetic "bhr"} & \hbet \\
+	\hline
+\end{tabular}
 \section{Omitted Proofs}
 
 \begin{lem}
-	If \verb|f| is a functor, so is \verb|MStep f|
+	$\hfe \alpha \Rightarrow \hfe (\hnun \alpha)$
 \end{lem}
+\begin{proof}
+	By elimination we transform to $\prove (f : \beta \to \gamma) \to (x : \hnun \beta) \to (\hnun \gamma)$.
+	By introduction we have $(f : \beta \to \gamma), (x : \hnun \beta) \prove (\hnun \gamma)$
+	We preform induction on $x$ to yield two cases, $\verb|map|_0 : (f : \beta \to \gamma) \to ([] : \hnun \alpha \beta) \to (\hnun \alpha \gamma)$ and $\verb|map|_0 : (f : \beta \to \gamma) \to ([] : \hnun \alpha \beta) \to (\hnun \alpha \gamma)$
+\end{proof}
 \begin{thm}
 	
 \end{thm}

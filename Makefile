@@ -35,7 +35,8 @@ docs: build
 	@echo "==================="
 	@echo ""
 	idris2 --mkdoc choice.ipkg
-	@cp -r build/docs docs
+	@cp -r build/docs pages/files/docs
+	@cp -r BUILDING.md CONTRIBUTING LICENSE paper/main.pdf pages/files
 banner:
 	@echo ""
 	@echo "==================="
@@ -43,3 +44,8 @@ banner:
 	@echo "Code generation: $(cg)"
 	@echo "==================="
 	@echo ""
+
+clean: 
+	rm -f -r build 
+	rm -f -r pages/files
+	mkdir pages/files
