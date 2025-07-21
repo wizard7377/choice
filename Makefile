@@ -1,29 +1,45 @@
-build:
-	idris2 --build choice.ipkg 
+cg ?= chez
+
+all: build install test
+
+build: banner
+	@echo ""
+	@echo "==========="
+	@echo "Building..."
+	@echo "==========="
+	@echo ""
+	idris2 --build choice.ipkg --cg $(cg)
 
 install: build
-	idris2 --install choice.ipkg
+	@echo ""
+	@echo "============="
+	@echo "Installing..."
+	@echo "============="
+	@echo ""
+	idris2 --install choice.ipkg --cg $(cg)
 
-buildRefc:
-	idris2 --build choice.ipkg --cg refc
-
-installRefc: build
-	idris2 --install choice.ipkg --cg refc
 test: install
 	@echo ""
-	@echo "Running tests... (Default)"
+	@echo "================"
+	@echo "Running tests..."
+	@echo "================"
 	@echo ""
-	idris2 --build test/test.ipkg
-	pack run test/test.ipkg
-
-testRefc: installRefc
+	idris2 --build test/test.ipkg --cg $(cg)
 	@echo ""
-	@echo "Running tests with reference counting... (RefC)"
+	pack --cg $(cg) run test/test.ipkg
+
+docs: build
 	@echo ""
-	idris2 --build test/test.ipkg --cg refc
-	pack run test/test.ipkg --cg refc
-
-testAll: test testRefc
-
-clean: 
-	
+	@echo "==================="
+	@echo "Generating docs..."
+	@echo "==================="
+	@echo ""
+	idris2 --mkdoc choice.ipkg
+	@cp -r build/docs docs
+banner:
+	@echo ""
+	@echo "==================="
+	@echo "Choice library"
+	@echo "Code generation: $(cg)"
+	@echo "==================="
+	@echo ""

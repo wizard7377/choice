@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Data.Choice.Combinators</title>
+  <link rel="stylesheet" type="text/css" id="preferredStyle" href="../default.css">
+  <script>
+    /* Updates the stylesheet to use the preferred one.
+       Note that we set the link to root ++ sourceLoc because the config
+       is shared across the whole website, so the root may differ from
+       page to page.
+    */
+    function setStyleSource (sourceLoc) {
+      document.getElementById("preferredStyle").href = "../" + sourceLoc + ".css";
+      document.getElementById("selectPreferredStyle").value = sourceLoc;
+    }
+    /* Initialises the preferred style sheet:
+       1. if there is a stored value then use that
+          otherwise select the default
+       2. set both the css link href & the drop down menu selected option
+    */
+    function initStyleSource () {
+      var preferredStyle = localStorage.getItem("stylefile");
+      if (preferredStyle !== null) {
+        setStyleSource(preferredStyle);
+      } else {
+        setStyleSource("default");
+      };
+    }
+    function saveStyleSource (preferredStyle) {
+      localStorage.stylefile = preferredStyle;
+    }
+    </script>
+</head>
+
+<body class="namespace">
+<header>
+  <strong>Idris2Doc</strong> : Data.Choice.Combinators
+  <nav><a href="../index.html">Index</a>
+
+  <select id="selectPreferredStyle">
+    <option value="default">Default</option>
+<option value="alternative">Alternative</option>
+<option value="blackandwhite">Black & White</option>
+
+  </select>
+  </nav>
+
+  <script>
+  /* We start by initialising the style source */
+  initStyleSource();
+
+  /* This listens for changes on the drop down menu and updates the
+     css used for the current page when a selection is made.
+  */
+  document.getElementById("selectPreferredStyle").addEventListener("change", function(){
+    var selected = this.options[this.selectedIndex].value; /* the option chosen */
+    setStyleSource (selected);
+    saveStyleSource (selected);
+  });
+</script>
+
+</header>
+<div class="container"><div id="module-header"><h1>Data.Choice.Combinators</h1><pre></pre></div><code></code><h2>Definitions</h2><dl class="decls"><dt id="Data.Choice.Combinators.C.fault"><code><span class="type resolved" title="Data.Choice.Combinators.C.fault"><span class="name function">fault</span></span>&ensp;:&ensp;<a class="type" href="Data.Choice.Types.html#Data.Choice.Types.MonadChoice"><span class="name type">MonadChoice</span></a>&ensp;<span class="boundvar">m</span>&ensp;<span class="keyword">=&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;<span class="boundvar">a</span></code></dt><dd><pre>  ⊥</pre><br>  <b>Visibility</b>:&ensp;<span class="keyword">public&ensp;export</span></dd><dt id="Data.Choice.Combinators.C.andThen"><code><span class="type resolved" title="Data.Choice.Combinators.C.andThen"><span class="name function">andThen</span></span>&ensp;:&ensp;<a class="type" href="Data.Choice.Types.html#Data.Choice.Types.MonadChoice"><span class="name type">MonadChoice</span></a>&ensp;<span class="boundvar">m</span>&ensp;<span class="keyword">=&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;<span class="boundvar">a</span>&ensp;<span class="keyword">-&gt;</span>&ensp;(<span class="boundvar">a</span>&ensp;<span class="keyword">-&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;<span class="boundvar">b</span>)&ensp;<span class="keyword">-&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;<span class="boundvar">b</span></code></dt><dd><pre>  Get a value, and then run another computation<br>  Equivalent to monadic `&gt;&gt;=`</pre><br>  <b>Visibility</b>:&ensp;<span class="keyword">public&ensp;export</span></dd><dt id="Data.Choice.Combinators.C.and"><code><span class="type resolved" title="Data.Choice.Combinators.C.and"><span class="name function">and</span></span>&ensp;:&ensp;<a class="type" href="Data.Choice.Types.html#Data.Choice.Types.MonadChoice"><span class="name type">MonadChoice</span></a>&ensp;<span class="boundvar">m</span>&ensp;<span class="keyword">=&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;<span class="boundvar">a</span>&ensp;<span class="keyword">-&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;<span class="boundvar">b</span>&ensp;<span class="keyword">-&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;(<span class="boundvar">a</span>,&ensp;<span class="boundvar">b</span>)</code></dt><dd><pre>  Conjunction of two statements, equivalent to `(,)` over the monad</pre><br>  <b>Visibility</b>:&ensp;<span class="keyword">public&ensp;export</span></dd><dt id="Data.Choice.Combinators.C.or"><code><span class="type resolved" title="Data.Choice.Combinators.C.or"><span class="name function">or</span></span>&ensp;:&ensp;(<a class="type" href="Data.Choice.Types.html#Data.Choice.Types.MonadChoice"><span class="name type">MonadChoice</span></a>&ensp;<span class="boundvar">m</span>,&ensp;<span class="type resolved" title="Prelude.Interfaces.Alternative"><span class="name type">Alternative</span></span>&ensp;<span class="boundvar">m</span>)&ensp;<span class="keyword">=&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;<span class="boundvar">a</span>&ensp;<span class="keyword">-&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;<span class="boundvar">b</span>&ensp;<span class="keyword">-&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;(<span class="type resolved" title="Prelude.Types.Either"><span class="name type">Either</span></span>&ensp;<span class="boundvar">a</span>&ensp;<span class="boundvar">b</span>)</code></dt><dd><pre>  Try both `x` and `y` and tag there results, then combine them</pre><br>  <b>Visibility</b>:&ensp;<span class="keyword">public&ensp;export</span></dd><dt id="Data.Choice.Combinators.C.collect"><code><span class="type resolved" title="Data.Choice.Combinators.C.collect"><span class="name function">collect</span></span>&ensp;:&ensp;(<a class="type" href="Data.Choice.Types.html#Data.Choice.Types.MonadChoice"><span class="name type">MonadChoice</span></a>&ensp;<span class="boundvar">m</span>,&ensp;(<span class="type resolved" title="Prelude.Interfaces.Applicative"><span class="name type">Applicative</span></span>&ensp;<span class="boundvar">m</span>,&ensp;<span class="type resolved" title="Prelude.Interfaces.Alternative"><span class="name type">Alternative</span></span>&ensp;<span class="boundvar">m</span>))&ensp;<span class="keyword">=&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;<span class="boundvar">a</span>&ensp;<span class="keyword">-&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;(<span class="type resolved" title="Prelude.Basics.List"><span class="name type">List</span></span>&ensp;<span class="boundvar">a</span>)</code></dt><dd><pre>  Give all the values into one choice</pre><br>  <b>Visibility</b>:&ensp;<span class="keyword">public&ensp;export</span></dd><dt id="Data.Choice.Combinators.C.split"><code><span class="type resolved" title="Data.Choice.Combinators.C.split"><span class="name function">split</span></span>&ensp;:&ensp;(<span class="type resolved" title="Prelude.Interfaces.Foldable"><span class="name type">Foldable</span></span>&ensp;<span class="boundvar">t</span>,&ensp;<a class="type" href="Data.Choice.Types.html#Data.Choice.Types.MonadChoice"><span class="name type">MonadChoice</span></a>&ensp;<span class="boundvar">m</span>)&ensp;<span class="keyword">=&gt;</span>&ensp;<span class="type resolved" title="Prelude.Interfaces.Alternative"><span class="name type">Alternative</span></span>&ensp;<span class="boundvar">m</span>&ensp;<span class="keyword">=&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;(<span class="boundvar">t</span>&ensp;<span class="boundvar">a</span>)&ensp;<span class="keyword">-&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;<span class="boundvar">a</span></code></dt><dd><pre>  Give all values back to the choice</pre><br>  <b>Visibility</b>:&ensp;<span class="keyword">public&ensp;export</span></dd><dt id="Data.Choice.Combinators.C.execChoice"><code><span class="type resolved" title="Data.Choice.Combinators.C.execChoice"><span class="name function">execChoice</span></span>&ensp;:&ensp;(<a class="type" href="Data.Choice.Types.html#Data.Choice.Types.MonadChoice"><span class="name type">MonadChoice</span></a>&ensp;<span class="boundvar">m</span>,&ensp;(<span class="type resolved" title="Prelude.Interfaces.Traversable"><span class="name type">Traversable</span></span>&ensp;<span class="boundvar">m</span>,&ensp;<span class="type resolved" title="Prelude.Interfaces.Alternative"><span class="name type">Alternative</span></span>&ensp;<span class="boundvar">m</span>))&ensp;<span class="keyword">=&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;<span class="boundvar">a</span>&ensp;<span class="keyword">-&gt;</span>&ensp;<span class="type resolved" title="Prelude.Basics.List"><span class="name type">List</span></span>&ensp;(<span class="boundvar">m</span>&ensp;<span class="boundvar">a</span>)</code></dt><dd><pre>  Get all the values</pre><br>  <b>Visibility</b>:&ensp;<span class="keyword">public&ensp;export</span></dd><dt id="Data.Choice.Combinators.C.recover"><code><span class="type resolved" title="Data.Choice.Combinators.C.recover"><span class="name function">recover</span></span>&ensp;:&ensp;<a class="type" href="Data.Choice.Types.html#Data.Choice.Types.MonadChoice"><span class="name type">MonadChoice</span></a>&ensp;<span class="boundvar">m</span>&ensp;<span class="keyword">=&gt;</span>&ensp;<span class="boundvar">a</span>&ensp;<span class="keyword">-&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;<span class="boundvar">a</span>&ensp;<span class="keyword">-&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;<span class="boundvar">a</span></code></dt><dd><pre>  Try the choice, if it yields nothing, return exactly one default value</pre><br>  <b>Visibility</b>:&ensp;<span class="keyword">public&ensp;export</span></dd><dt id="Data.Choice.Combinators.C.not"><code><span class="type resolved" title="Data.Choice.Combinators.C.not"><span class="name function">not</span></span>&ensp;:&ensp;<a class="type" href="Data.Choice.Types.html#Data.Choice.Types.MonadChoice"><span class="name type">MonadChoice</span></a>&ensp;<span class="boundvar">m</span>&ensp;<span class="keyword">=&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;<span class="boundvar">a</span>&ensp;<span class="keyword">-&gt;</span>&ensp;<span class="boundvar">m</span>&ensp;()</code></dt><dd><pre>  Try the choice, returning nothing when the choice returns, and one `()` when it dosen&apos;t</pre><br>  <b>Visibility</b>:&ensp;<span class="keyword">public&ensp;export</span></dd></dl></div><footer>Produced by Idris 2 version 0.7.0-44279eff2</footer></body></html>

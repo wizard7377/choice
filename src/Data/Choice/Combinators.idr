@@ -52,3 +52,10 @@ namespace C
   recover v c = case !(look c) of
     Nothing => pure v
     _ => c
+
+  ||| Try the choice, returning nothing when the choice returns, and one `()` when it dosen't
+  public export 
+  not : MonadChoice m => m a -> m ()
+  not m = case !(look m) of 
+    Nothing => give $ pure $ Just ((), give $ pure Nothing)
+    Just (x, xs) => give $ pure Nothing

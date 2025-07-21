@@ -3,5 +3,5 @@ import Test.Groups.Simple
 public export
 testMain : IO ()
 testMain = do 
-  simpleTestA 
+  simpleGroup 
   pure ()

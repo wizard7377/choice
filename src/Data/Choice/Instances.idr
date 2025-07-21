@@ -2,6 +2,7 @@ module Data.Choice.Instances
 import Data.Choice.Types
 import Data.Choice.Internal
 import Control.Monad.Trans
+import Control.Monad.State
 --%default total
 public export
 Monad f => Functor (ChoiceT f) where 
@@ -89,4 +90,15 @@ public export
 Monad m => MonadChoice (ChoiceT m) where 
   look = lookChoice
   give = giveChoice
+
+
+covering
+public export
+Monad m => Bifunctor (\a => \b => ChoiceT m (Either a b)) where
+  bimap f g = map (bimap f g)
+
+MonadState s m => MonadState s (ChoiceT m) where 
+  get = lift get
+  put = lift . put
+
 

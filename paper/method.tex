@@ -113,13 +113,4 @@ That is, while in a regular list you can retrive values until you get to the end
 Note also that because of how they are defined, \verb|MStep| does \emph{not} have any context on its first value.
 This is where \verb|MkChoiceT| comes in, allowing us to "wrap" \verb|MStep| itself in the monadic context, thereby creating a true list monad.
 
-\begin{lem}
-	For any $(m : \ty \to \ty)$, if $m$ is a functor, then so is $\verb|MStep| \ m$
-\end{lem}
-\begin{proof}
-	
-\end{proof}
-\begin{thm}
-	For any $(m : \ty \to \ty)$, if $m$ is a functor, then so is $\verb|ChoiceT| \ m$
-\end{thm}
 	

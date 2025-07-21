@@ -5,3 +5,5 @@ paper/*
 !paper/*.tex 
 !paper/*.bib
 !paper/main.pdf
+!paper/Noto_Serif_Hebrew/**
+!paper/Noto_Serif_Hebrew

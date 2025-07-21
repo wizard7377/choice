@@ -1,7 +1,5 @@
 # Choice: The List Monad Transformer 
 
-(Note, the paper on this may be found [here](paper/main.pdf))
-
 A List Monad Transformer for Idris, intended for real world use.
 
 The interface for this consists of two main types, the `Choice` Monad transformer and the `MonadChoice` class.
@@ -22,4 +20,10 @@ ChoiceIO : Type -> Type where
 ```
 This is much clearer! Essentially, the `Choice` Monad allows us to get one result from the `Choice`, and then returns that value and the remaining `Choice` inside the inner monad. To recover the list of choices, we simply run this until `Choice` returns nothing
 
-## The basic logical structure
+## Links
+
+- [Docs](docs/index.html)
+- [Building](BUILDING.md)
+- [Contributing](CONTRIBUTING)
+- [Paper](paper/main.pdf)
+- [License](LICENSE)
