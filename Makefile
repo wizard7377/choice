@@ -35,8 +35,8 @@ docs: build
 	@echo "==================="
 	@echo ""
 	idris2 --mkdoc choice.ipkg
-	@cp -r build/docs pages/files/docs
-	@cp -r BUILDING.md CONTRIBUTING LICENSE paper/main.pdf pages/files
+	@cp -r build/docs docs/files/docs
+	@cp -r BUILDING.md CONTRIBUTING LICENSE paper/main.pdf docs/files
 banner:
 	@echo ""
 	@echo "==================="
@@ -48,5 +48,5 @@ banner:
 clean: 
 	rm -f -r build 
 	rm -f -r test/build
-	rm -f -r pages/files
-	mkdir pages/files
+	rm -f -r docs/files
+	mkdir docs/files
