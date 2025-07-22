@@ -16,7 +16,7 @@ install: build
 	@echo "Installing..."
 	@echo "============="
 	@echo ""
-	pack $(pack) --cg $(cg) install choice.ipkg
+	idris2 --cg $(cg) --install choice.ipkg
 
 test: install
 	@echo ""

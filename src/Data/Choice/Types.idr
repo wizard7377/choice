@@ -4,13 +4,13 @@ import public Data.Simple
 %default total
 public export 
 Yield : (m : Type -> Type) -> (a : Type) -> Type 
-Yield m a = m (Maybe (a, m a))
+Yield m a = m (Maybe (Lazy a, m a))
   
 covering
 public export 
 data MStep : forall k. (k -> Type) -> k -> Type where 
     MOne : a -> MStep m a
-    MApp : MStep m a -> m (MStep m a) -> MStep m a
+    MApp : Lazy (MStep m a) -> m (MStep m a) -> MStep m a
 public export 
 MList : (Type -> Type) -> Type -> Type
 MList m a = m (Maybe (MStep {k = Type} m a))
@@ -43,15 +43,14 @@ consumeChoiceT (MkChoiceT x) = case !x of
     Just (MOne v) => pure [v]
     Just (MApp v xs) => do
       start <- consumeChoiceT $ MkChoiceT $ pure $ Just v
-      rest <- consumeChoiceT $ MkChoiceT $ Just <$> xs
-      ?h0
-      --pure (v ++ rest)  
+      rest <- consumeChoiceT $ MkChoiceT $ Just <$> xs 
+      pure (start ++ rest)  
 public export
 interface (Functor m, Applicative m, Monad m) => MonadChoice m where 
   ||| "Look" into the inner state of the monad
-  look : forall a. m a -> Yield m a 
+  look : forall a. m a -> m (Maybe (Lazy a, m a))
   ||| "Give" into the inner state of the monad.
-  give : forall a. Yield m a -> m a
+  give : forall a. m (Maybe (Lazy a, m a)) -> m a
   ||| The Prolog cut, `!`, that is, if something yields some number of results make it yield one or zero
   cut : forall a. m a -> m a
   cut m = do 

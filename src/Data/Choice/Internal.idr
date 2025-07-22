@@ -7,7 +7,7 @@ mutual
     appendMList xs ys = (pure . (`appendMList'` ys)) =<< xs
     export
     appendMList' : Monad m => MStep m a -> MList1 m a -> MStep m a
-    appendMList' = MApp
+    appendMList' v = MApp (force v)
         
        
 
@@ -59,6 +59,19 @@ appMStep (MApp f fs) (MApp x xs) = MApp (appMStep f x) $ do
   let rC = appendMList (pure rB) $ pure r3
   rC
   
+public export
+mapMList : Monad m => (a -> b) -> MList m a -> MList m b
+mapMList f x = do
+  Just x' <- x | Nothing => pure Nothing
+  pure $ Just $ mapMStep f x'
+ 
+public export
+appMList : Monad m => MList m (a -> b) -> MList m a -> MList m b
+appMList f x = do 
+  Just f' <- f | Nothing => pure Nothing 
+  Just x' <- x | Nothing => pure Nothing
+  pure $ Just $ appMStep f' x'
+ 
 {-
 export
 bindList : forall a, b, m. Monad m => (a -> MList1 m b) -> MList1 m a -> MList1 m b
@@ -121,7 +134,9 @@ joinChoiceT (MkChoiceT c) = MkChoiceT (joinChoiceT' c)
 
 export 
 liftChoiceT : Monad m => m a -> ChoiceT m a
-liftChoiceT v = ?h7
+liftChoiceT v = MkChoiceT $ do
+  v' <- v 
+  pure $ Just $ MOne $ v'
 
 foldMapStep : Monoid b => Monad m => Foldable m => (a -> b) -> MStep m a -> b
 foldMapStep f t = case t of 
@@ -150,8 +165,12 @@ foldrChoiceT' f a c = (helpFold @{funcMono} f c) a
 
 
 public export 
-foldrChoiceT : Monad m => Foldable m => (a -> b -> b) -> b -> ChoiceT m a -> b
-foldrChoiceT f a (MkChoiceT c) = ?h8
+foldrChoiceT : forall a, b, m. Monad m => Traversable m => Foldable m => (a -> b -> b) -> b -> ChoiceT m a -> b
+foldrChoiceT f a (MkChoiceT c) = let 
+  s : (Maybe (m (MStep m _))) = sequence c
+  in case s of 
+    Just c' => foldrChoiceT' f a c'
+    Nothing => a
 
 mutual
     export 
@@ -161,12 +180,19 @@ mutual
             y0 = traverseStep f x
             y1 = traverseList f xs
         in
-          MApp <$> y0 <*> y1
+          MApp <$> (delay <$> y0) <*> y1
     traverseStep f (MOne x) = MOne <$> f x
     traverseList : (Traversable m, Monad m, Applicative f) => (a -> f b) -> MList1 m a -> f (MList1 m b)
     traverseList f = traverse (traverseStep f)
-    traverseList' : (Traversable m, Monad m, Applicative f) => (a -> f b) -> MList m a -> f (MList m b)
-    traverseList' = ?tl2
+    traverseList' : (Traversable m, Monad m, Functor f, Applicative f) => (a -> f b) -> MList m a -> f (MList m b)
+    traverseList' f c = let 
+      c' : Maybe (MList1 m a) = sequence c
+      in case c' of 
+        Just c'' => let 
+          r = traverseList f c''
+          r' = (map $ map Just) r
+          in r'
+        Nothing => pure $ pure $ Nothing
 public export
 traverseChoiceT : (Traversable m, Monad m, Applicative f) => (a -> f b) -> ChoiceT m a -> f (ChoiceT m b)
 traverseChoiceT f (MkChoiceT m) = 

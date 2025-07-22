@@ -1,5 +1,5 @@
 module Data.Choice.Instances 
-import Data.Choice.Types
+import Data.Choice.Types 
 import Data.Choice.Internal
 import Control.Monad.Trans
 import Control.Monad.State
@@ -48,7 +48,7 @@ Monad m => Functor (MList m) where
 public export
 Monad m => Functor (MList m) => Applicative (MList m) where 
   pure = pure . Just . pure
-  f <*> c = ?aml
+  (<*>) = appMList
 public export
 MonadTrans ChoiceT where 
   lift = liftChoiceT
@@ -67,7 +67,7 @@ public export
   a <|> b = appendChoiceT a b
   
 public export
-(Foldable m, Monad m) => Foldable (ChoiceT m) where
+(Foldable m, Monad m, Traversable m) => Foldable (ChoiceT m) where
   foldr = foldrChoiceT
 
 public export
@@ -81,26 +81,53 @@ public export
     Just (x, xs) => give $ pure (Just (x, xs <|> yl))
 
 
+public export 
+[unfill] Monad m => Cast (MList1 m a) (MList m a) where
+  cast l = Just <$> l
+  
+public export 
+[listChoice] Cast (MList m a) (ChoiceT m a) where 
+  cast l = MkChoiceT l
+public export 
+[choiceList] Cast (ChoiceT m a) (MList m a) where 
+  cast (MkChoiceT v) = v
+  
+public export 
+Monad m => Cast (MList1 m a) (ChoiceT m a) where 
+  cast l = cast @{listChoice} $ cast @{unfill} l
+private 
+getFirstAndRest : Monad m => MList1 m a -> m (Lazy a , Maybe (MList1 m a))
+getFirstAndRest c = case !c of 
+  MOne x => pure (delay x, Nothing)
+  MApp x y => do 
+    cs : (a , Maybe _ ) <- getFirstAndRest $ pure $ x
+    case cs of 
+      (v, Nothing) => pure (delay v, Just y)
+      (v, Just r) => pure (delay v, Just $ appendMList r y)
+    
+  
 
 -- TODO: Cleanup
 private
-lookChoice : (Applicative m, Monad m) => ChoiceT m a -> Yield (ChoiceT m) a
+lookChoice : forall a, m. (Applicative m, Monad m) => ChoiceT m a -> Yield (ChoiceT m) a
 lookChoice (MkChoiceT c) = MkChoiceT $ do 
-  c' <- c
+  Just c' <- c | Nothing => pure Nothing
   case c' of 
-    Just (MOne x) => pure MOne
-    MApp x xs => do 
-        xs' : MStep m a <- xs
-        pure $ case xs' of
-            MOne => MApp (Just (x, empty)) $ pure MOne
-            MApp y ys => (MApp (Just (x, MkChoiceT xs)) $ pure MOne)
-  
+    MOne x => pure $ Just $ MOne $ Just $ (delay x, empty)
+    MApp x y => do 
+      (v, r) : (a , Maybe (MList1 m a) ) <- getFirstAndRest $ pure $ force x 
+      (v2 , r2) : (a , MList1 m a) <- case r of 
+            Just r' => let tem : m (a , m (MStep m a)) = (MkPair v) <$> (pure $ appendMList r' y) in tem
+            Nothing => let tem2 : m (a , m (MStep m a)) = (MkPair v) <$> (pure $ y) in tem2
+      pure $ Just $ MOne $ Just $ (delay v2, cast r2)
+
+ 
 -- TODO: Cleanup
 private
 giveChoice : Monad m => Yield (ChoiceT m) a -> ChoiceT m a
-giveChoice c = case !c of 
-  Nothing => MkChoiceT $ pure MOne 
-  Just (x, xs) => (MkChoiceT $ pure (MApp x $ pure MOne)) <|> (xs)
+giveChoice c = do 
+  Just (v,r) <- c | Nothing => MkChoiceT $ pure $ Nothing
+  MkChoiceT $ pure $ Just $ MApp (MOne v) $ ?gcr
 public export
 Monad m => MonadChoice (ChoiceT m) where 
   look = lookChoice

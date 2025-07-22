@@ -22,7 +22,8 @@ modules =
 	Data.Choice.Types,
 	Data.Choice.Instances,
 	Data.Choice.Combinators,
-	Data.Choice.Proof
+	Data.Choice.Proof,
+	Data.Choice.Internal
 
 -- main file (i.e. file to load at REPL)
 -- main =
