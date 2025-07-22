@@ -126,8 +126,8 @@ lookChoice (MkChoiceT c) = MkChoiceT $ do
 private
 giveChoice : Monad m => Yield (ChoiceT m) a -> ChoiceT m a
 giveChoice c = do 
-  Just (v,r) <- c | Nothing => MkChoiceT $ pure $ Nothing
-  MkChoiceT $ pure $ Just $ MApp (MOne v) $ ?gcr
+  Just (v,r) <- c | Nothing => MkChoiceT $ pure $ Nothing 
+  pure v <|> r
 public export
 Monad m => MonadChoice (ChoiceT m) where 
   look = lookChoice
