@@ -1,5 +1,5 @@
 cg ?= chez
-
+pack ?=
 all: build install test
 
 build: banner
@@ -8,7 +8,7 @@ build: banner
 	@echo "Building..."
 	@echo "==========="
 	@echo ""
-	idris2 --build choice.ipkg --cg $(cg)
+	pack $(pack) --cg $(cg) build choice.ipkg
 
 install: build
 	@echo ""
@@ -16,7 +16,7 @@ install: build
 	@echo "Installing..."
 	@echo "============="
 	@echo ""
-	idris2 --install choice.ipkg --cg $(cg)
+	idris2 --cg $(cg) --install choice.ipkg
 
 test: install
 	@echo ""
@@ -24,9 +24,9 @@ test: install
 	@echo "Running tests..."
 	@echo "================"
 	@echo ""
-	idris2 --build test/test.ipkg --cg $(cg)
+	pack $(pack) --cg $(cg) build test/test.ipkg
 	@echo ""
-	pack --cg $(cg) run test/test.ipkg
+	pack $(pack) --cg $(cg) run test/test.ipkg
 
 docs: build
 	@echo ""
@@ -47,5 +47,6 @@ banner:
 
 clean: 
 	rm -f -r build 
+	rm -f -r test/build
 	rm -f -r pages/files
 	mkdir pages/files

@@ -20,7 +20,7 @@ Stream String Char where
 interface MonadParser m where
 Parser : (global : Type -> Type) -> (local : Type -> Type) -> (stream : Type) -> (error : Type) -> (action : Type) -> Type
 Parser global local stream error action = StateT stream (ChoiceT global) (local (Either error action))
-
+{- 
 Monad global => Monad local => Stream stream _ => MonadParser (Parser global local stream error action) where
 getToken : Monad g => Monad l => Stream s t => Parser g l s e t
 getToken = do 
@@ -31,3 +31,4 @@ getToken = do
       put xs
       pure x
   
+-}

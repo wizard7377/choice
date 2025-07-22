@@ -1,0 +1,27 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: choice
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Asher
+    family-names: Frost
+    orcid: 'https://orcid.org/0009-0000-1043-4054'
+repository-code: 'https://github.com/wizard7377/choice'
+url: 'https://wizard7377.github.io/choice/'
+abstract: >-
+  A List Monad Transformer for Idris, intended for real
+  world use. The interface for this consists of two main
+  types, the Choice Monad transformer and the MonadChoice
+  class. The Choice Monad Transformer is based heavily off
+  of the work done on the Haskell libaries logict and
+  list-t, both of which it derives its form
+keywords:
+  - idris2
+  - idris
+  - monad
+license: BSD-2-Clause

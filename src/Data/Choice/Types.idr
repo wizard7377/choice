@@ -4,16 +4,20 @@ import public Data.Simple
 %default total
 public export 
 Yield : (m : Type -> Type) -> (a : Type) -> Type 
-Yield m a = m (Maybe (a, m a))
+Yield m a = m (Maybe (Lazy a, m a))
   
 covering
 public export 
 data MStep : forall k. (k -> Type) -> k -> Type where 
-    MNil : MStep m a
-    MCons : a -> m (MStep m a) -> MStep m a
+    MOne : a -> MStep m a
+    MApp : Lazy (MStep m a) -> m (MStep m a) -> MStep m a
 public export 
 MList : (Type -> Type) -> Type -> Type
-MList m a = m (MStep {k = Type} m a)
+MList m a = m (Maybe (MStep {k = Type} m a))
+
+public export 
+MList1 : (Type -> Type) -> Type -> Type
+MList1 m a = m (MStep {k = Type} m a)
 
 ||| The core List Monad Transformer
 ||| Fundementally, this behaves as a wrapper around a list with monadic actions at each cons application
@@ -35,16 +39,18 @@ runChoiceT (MkChoiceT x) = x
 public export covering
 consumeChoiceT : Monad m => ChoiceT m a -> m (List a)
 consumeChoiceT (MkChoiceT x) = case !x of
-    MNil => pure []
-    MCons v xs => do
-      rest <- consumeChoiceT $ MkChoiceT xs
-      pure (v :: rest)  
+    Nothing => pure []
+    Just (MOne v) => pure [v]
+    Just (MApp v xs) => do
+      start <- consumeChoiceT $ MkChoiceT $ pure $ Just v
+      rest <- consumeChoiceT $ MkChoiceT $ Just <$> xs 
+      pure (start ++ rest)  
 public export
 interface (Functor m, Applicative m, Monad m) => MonadChoice m where 
   ||| "Look" into the inner state of the monad
-  look : forall a. m a -> Yield m a 
+  look : forall a. m a -> m (Maybe (Lazy a, m a))
   ||| "Give" into the inner state of the monad.
-  give : forall a. Yield m a -> m a
+  give : forall a. m (Maybe (Lazy a, m a)) -> m a
   ||| The Prolog cut, `!`, that is, if something yields some number of results make it yield one or zero
   cut : forall a. m a -> m a
   cut m = do 

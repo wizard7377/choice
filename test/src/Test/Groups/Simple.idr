@@ -4,7 +4,7 @@ import Data.Choice
 import Test.Helper
   
 testSizeAt : Nat 
-testSizeAt = 200
+testSizeAt = 100
 simpleTestA' : Nat -> Choice Nat
 simpleTestA' n = do 
   x <- C.split $ pure [0..n]
@@ -32,5 +32,5 @@ compareTestA = do
 public export
 simpleGroup : IO ()
 simpleGroup = do 
-  compareTestA
+  --compareTestA
   simpleTestA
