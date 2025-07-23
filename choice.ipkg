@@ -23,7 +23,12 @@ modules =
 	Data.Choice.Instances,
 	Data.Choice.Combinators,
 	Data.Choice.Proof,
-	Data.Choice.Internal
+	Data.Choice.Class,
+	Data.Choice.Internal,
+	Data.Choice.Assay.Cons.Types,
+	Data.Choice.Assay.Cons.Instances,
+	Data.Choice.Assay.Cons.Internal,
+	Data.Choice.Assay.Cons
 
 -- main file (i.e. file to load at REPL)
 -- main =

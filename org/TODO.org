@@ -1,0 +1,9 @@
+* TODO Make sure functions work as intended
+* TODO Optimize functions
+** TODO Add assays, both for List and Logic
+** TODO Create better system for tests
+** TODO Clean up internals
+* TODO Write more tests
+* TODO Make more instances
+** TODO particularly for local monads
+

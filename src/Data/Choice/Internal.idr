@@ -1,26 +1,26 @@
 module Data.Choice.Internal
 import Data.Choice.Types
-
-mutual 
-    export
-    appendMList : Monad m => MList1 m a -> MList1 m a -> MList1 m a
-    appendMList xs ys = (pure . (`appendMList'` ys)) =<< xs
-    export
-    appendMList' : Monad m => MStep m a -> MList1 m a -> MStep m a
-    appendMList' v = MApp (force v)
+export
+appendListT' : Monad m => StepT m a -> ListT1 m a -> StepT m a
+appendListT' v = MApp (force v)
+%inline
+export
+appendListT : Monad m => ListT1 m a -> ListT1 m a -> ListT1 m a
+appendListT xs ys = (pure . (`MApp` ys)) =<< xs
+    
         
        
 
 mutual 
     export
-    joinMList : Monad m => MList1 m (MList m a) -> MList m a 
-    joinMList = (=<<) joinMList'
+    joinListT : Monad m => ListT1 m (ListT m a) -> ListT m a 
+    joinListT = (=<<) joinListT'
     export
-    joinMList' : Monad m => MStep m (MList m a) -> MList m a
-    joinMList' (MOne y) = y
-    joinMList' (MApp x xs) = do
-      y <- joinMList' x 
-      ys <- joinMList xs 
+    joinListT' : Monad m => StepT m (ListT m a) -> ListT m a
+    joinListT' (MOne y) = y
+    joinListT' (MApp x xs) = do
+      y <- joinListT' x 
+      ys <- joinListT xs 
       case y of 
         Nothing => pure ys
         Just y' => case ys of 
@@ -28,65 +28,65 @@ mutual
           Just ys' => pure $ Just (MApp y' $ pure ys')
 
 export
-mapMStep : Monad m => (a -> b) -> MStep m a -> MStep m b
-mapMStep f (MOne x) = MOne (f x)
-mapMStep f (MApp x xs) = MApp (mapMStep f x) (mapMStep f <$> xs)
+mapStepT : Monad m => (a -> b) -> StepT m a -> StepT m b
+mapStepT f (MOne x) = MOne (f x)
+mapStepT f (MApp x xs) = MApp (mapStepT f x) (mapStepT f <$> xs)
  
 export 
-comapMStep : Monad m => MStep m (a -> b) -> a -> MStep m b
-comapMStep (MOne f) y = MOne (f y)
-comapMStep (MApp f fs) y = MApp (comapMStep f y) ((flip comapMStep) y <$> fs)
-remapStep : Monad m => a -> MStep m (a -> b) -> MStep m b
-remapStep = flip comapMStep
+comapStepT : Monad m => StepT m (a -> b) -> a -> StepT m b
+comapStepT (MOne f) y = MOne (f y)
+comapStepT (MApp f fs) y = MApp (comapStepT f y) ((flip comapStepT) y <$> fs)
+remapStep : Monad m => a -> StepT m (a -> b) -> StepT m b
+remapStep = flip comapStepT
 private 
-Monad m => Semigroup (MList1 m a) where 
-  (<+>) = appendMList
+Monad m => Semigroup (ListT1 m a) where 
+  (<+>) = appendListT
 export
-pureMStep : Monad m => a -> MStep m a 
-pureMStep v = MOne v
+pureStepT : Monad m => a -> StepT m a 
+pureStepT v = MOne v
 export
-appMStep : forall a, b, m. (Monad m) => MStep m (a -> b) -> MStep m a -> MStep m b
-appMStep (MOne f) (MOne x) = MOne (f x)
-appMStep (MApp f fs) (MOne x) = MApp (comapMStep f x) (remapStep x <$> fs)
-appMStep (MOne f) (MApp x xs) = MApp (mapMStep f x) (mapMStep f <$> xs)
-appMStep (MApp f fs) (MApp x xs) = MApp (appMStep f x) $ do
+appStepT : forall a, b, m. (Monad m) => StepT m (a -> b) -> StepT m a -> StepT m b
+appStepT (MOne f) (MOne x) = MOne (f x)
+appStepT (MApp f fs) (MOne x) = MApp (comapStepT f x) (remapStep x <$> fs)
+appStepT (MOne f) (MApp x xs) = MApp (mapStepT f x) (mapStepT f <$> xs)
+appStepT (MApp f fs) (MApp x xs) = MApp (appStepT f x) $ do
   xs' <- xs
   fs' <- fs
-  let r1 = appMStep f xs'
-  let r2 = appMStep fs' x
-  let r3 = appMStep fs' xs'
-  let rB = appendMList' r1 $ pure r2
-  let rC = appendMList (pure rB) $ pure r3
+  let r1 = appStepT f xs'
+  let r2 = appStepT fs' x
+  let r3 = appStepT fs' xs'
+  let rB = MApp r1 $ pure r2
+  let rC = appendListT (pure rB) $ pure r3
   rC
   
 public export
-mapMList : Monad m => (a -> b) -> MList m a -> MList m b
-mapMList f x = do
+mapListT : Monad m => (a -> b) -> ListT m a -> ListT m b
+mapListT f x = do
   Just x' <- x | Nothing => pure Nothing
-  pure $ Just $ mapMStep f x'
+  pure $ Just $ mapStepT f x'
  
 public export
-appMList : Monad m => MList m (a -> b) -> MList m a -> MList m b
-appMList f x = do 
+appListT : Monad m => ListT m (a -> b) -> ListT m a -> ListT m b
+appListT f x = do 
   Just f' <- f | Nothing => pure Nothing 
   Just x' <- x | Nothing => pure Nothing
-  pure $ Just $ appMStep f' x'
+  pure $ Just $ appStepT f' x'
  
 {-
 export
-bindList : forall a, b, m. Monad m => (a -> MList1 m b) -> MList1 m a -> MList1 m b
+bindList : forall a, b, m. Monad m => (a -> ListT1 m b) -> ListT1 m a -> ListT1 m b
 bindList f c = do
-  r0 <- mapMStep f <$> c
-  let r1 = ?h10 -- joinMList' r0
+  r0 <- mapStepT f <$> c
+  let r1 = ?h10 -- joinListT' r0
   r1
 -}
-bindList' : forall a, b, m. Monad m => (a -> MList m b) -> MList m a -> MList m b
+bindList' : forall a, b, m. Monad m => (a -> ListT m b) -> ListT m a -> ListT m b
 bindList' f c = case !c of 
   Nothing => pure Nothing 
   Just (MOne x) => f x
   Just (MApp x y) => do
-    rx <- joinMList' $ mapMStep f x
-    ry <- joinMList' $ mapMStep f !y 
+    rx <- joinListT' $ mapStepT f x
+    ry <- joinListT' $ mapStepT f !y 
     case rx of 
       Nothing => pure $ ry 
       Just rx' => case ry of 
@@ -110,7 +110,7 @@ appendChoiceT (MkChoiceT c0) (MkChoiceT c1) = MkChoiceT $ do
       Nothing => c0 
       Just y => pure $ Just $ (MApp x $ pure y) 
   
-joinChoiceT'' : forall a, m. Monad m => MStep m (ChoiceT m a) -> MList m a
+joinChoiceT'' : forall a, m. Monad m => StepT m (ChoiceT m a) -> ListT m a
 joinChoiceT'' (MOne (MkChoiceT x)) = x
 joinChoiceT'' (MApp x y) = do
   x' <- joinChoiceT'' x
@@ -120,7 +120,7 @@ joinChoiceT'' (MApp x y) = do
     Just x'' => case !y' of 
       Nothing => pure x'
       Just y'' => pure $ Just $ MApp x'' (pure y'')
-joinChoiceT' : forall a, m. Monad m => MList m (ChoiceT m a) -> MList m a
+joinChoiceT' : forall a, m. Monad m => ListT m (ChoiceT m a) -> ListT m a
 joinChoiceT' c = 
   case !c of
         Nothing => pure Nothing
@@ -138,11 +138,11 @@ liftChoiceT v = MkChoiceT $ do
   v' <- v 
   pure $ Just $ MOne $ v'
 
-foldMapStep : Monoid b => Monad m => Foldable m => (a -> b) -> MStep m a -> b
+foldMapStep : Monoid b => Monad m => Foldable m => (a -> b) -> StepT m a -> b
 foldMapStep f t = case t of 
   MOne x => f x
   MApp x xs => (foldMapStep f x) <+> concat (foldMapStep f <$> xs)
-foldMapChoiceT' : Monoid b => Monad m => Foldable m => (a -> b) -> MList1 m a -> b
+foldMapChoiceT' : Monoid b => Monad m => Foldable m => (a -> b) -> ListT1 m a -> b
 foldMapChoiceT' f t = foldMap id $ do 
   t' <- t 
   (case t' of
@@ -158,23 +158,42 @@ private
 [funcMono] Monoid (a -> a) using funcSemi where 
   neutral = id
 private
-helpFold : Monoid (c -> c) => Monad m => Foldable m => (a -> (c -> c)) -> MList1 m a -> (c -> c)
+helpFold : Monoid (c -> c) => Monad m => Foldable m => (a -> (c -> c)) -> ListT1 m a -> (c -> c)
 helpFold = foldMapChoiceT'
-foldrChoiceT' : Monad m => Foldable m => (a -> b -> b) -> b -> MList1 m a -> b
+foldrChoiceT' : Monad m => Foldable m => (a -> b -> b) -> b -> ListT1 m a -> b
 foldrChoiceT' f a c = (helpFold @{funcMono} f c) a
 
 
+
 public export 
-foldrChoiceT : forall a, b, m. Monad m => Traversable m => Foldable m => (a -> b -> b) -> b -> ChoiceT m a -> b
+foldrStepT : forall a, b, m. Monad m => Foldable m => (a -> b -> b) -> b -> StepT m a -> b
+foldrStepT f a (MOne c) = f c a
+foldrStepT f a (MApp x y) = foldrChoiceT' f a (pure $ MApp x y)
+public export 
+foldrListT : forall a, b, m. Monad m => Foldable m => (a -> b -> b) -> b -> ListT m a -> b
+foldrListT f a c = let 
+  r0 = (map $ map (foldrStepT f a)) c -- foldrChoiceT' f a c
+  r1 = concat r0
+  in case r1 of 
+    Just y => y 
+    Nothing => a
+public export 
+foldrChoiceT : forall a, b, m. Monad m => Foldable m => (a -> b -> b) -> b -> ChoiceT m a -> b
 foldrChoiceT f a (MkChoiceT c) = let 
-  s : (Maybe (m (MStep m _))) = sequence c
+  r' = foldrListT f a c
+  in r'
+  {-
+foldrChoiceT f a (MkChoiceT c) = let 
+  s : (Maybe (m (StepT m _))) = sequence c
   in case s of 
     Just c' => foldrChoiceT' f a c'
     Nothing => a
+-}
+
 
 mutual
     export 
-    traverseStep : (Traversable m, Monad m, Applicative f) => (a -> f b) -> MStep m a -> f (MStep m b)
+    traverseStep : (Traversable m, Monad m, Applicative f) => (a -> f b) -> StepT m a -> f (StepT m b)
     traverseStep f (MApp x xs) =
         let
             y0 = traverseStep f x
@@ -182,11 +201,11 @@ mutual
         in
           MApp <$> (delay <$> y0) <*> y1
     traverseStep f (MOne x) = MOne <$> f x
-    traverseList : (Traversable m, Monad m, Applicative f) => (a -> f b) -> MList1 m a -> f (MList1 m b)
+    traverseList : (Traversable m, Monad m, Applicative f) => (a -> f b) -> ListT1 m a -> f (ListT1 m b)
     traverseList f = traverse (traverseStep f)
-    traverseList' : (Traversable m, Monad m, Functor f, Applicative f) => (a -> f b) -> MList m a -> f (MList m b)
+    traverseList' : (Traversable m, Monad m, Functor f, Applicative f) => (a -> f b) -> ListT m a -> f (ListT m b)
     traverseList' f c = let 
-      c' : Maybe (MList1 m a) = sequence c
+      c' : Maybe (ListT1 m a) = sequence c
       in case c' of 
         Just c'' => let 
           r = traverseList f c''
@@ -200,3 +219,37 @@ traverseChoiceT f (MkChoiceT m) =
 
 
 
+public export 
+getFirstAndRest : Monad m => ListT1 m a -> m (Lazy a , Maybe (ListT1 m a))
+getFirstAndRest c = case !c of 
+  MOne x => pure (delay x, Nothing)
+  MApp x y => do 
+    cs : (Lazy a , Maybe _ ) <- getFirstAndRest $ pure $ x
+    case cs of 
+      (v, Nothing) => pure (v, Just y)
+      (v, Just r) => pure (v, Just $ appendListT r y)
+    
+  
+
+-- TODO: Cleanup
+public export 
+lookChoice : forall a, m. Alternative (ChoiceT m) => Monad (ChoiceT m) => (Applicative m, Monad m) => ChoiceT m a -> Yield (ChoiceT m) a
+lookChoice (MkChoiceT c) = MkChoiceT $ do 
+  Just c' <- c | Nothing => pure Nothing
+  case c' of 
+    MOne x => pure $ Just $ MOne $ Just $ (delay x, empty)
+    MApp x y => do 
+      (v, r) : (Lazy a , Maybe (ListT1 m a) ) <- getFirstAndRest $ pure x 
+      (v2 , r2) : (Lazy a , ListT1 m a) <- case r of 
+            Just r' => let tem : m (Lazy a , m (StepT m a)) = (MkPair v) <$> (pure $ appendListT r' y) in tem
+            Nothing => let tem2 : m (Lazy a , m (StepT m a)) = (MkPair v) <$> (pure $ y) in tem2
+      pure $ Just $ MOne $ Just $ (v2, cast @{unfillChoice} r2)
+
+ 
+-- TODO: Cleanup
+public export 
+giveChoice : Alternative (ChoiceT m) => Monad (ChoiceT m) => Monad m => Yield (ChoiceT m) a -> ChoiceT m a
+giveChoice c = do 
+  Just (v,r) <- c | Nothing => MkChoiceT $ pure $ Nothing 
+  pure v <|> r
+  

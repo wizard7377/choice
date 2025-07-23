@@ -5,3 +5,5 @@ module Data.Choice
 import public Data.Choice.Types
 import public Data.Choice.Instances as Instances
 import public Data.Choice.Combinators
+import public Data.Choice.Class
+%hide Data.Choice.Types.MkChoiceT

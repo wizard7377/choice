@@ -1,42 +1,60 @@
 module Data.Choice.Types
 import public Data.Simple
-
+import public Data.Choice.Class
 %default total
 public export 
 Yield : (m : Type -> Type) -> (a : Type) -> Type 
 Yield m a = m (Maybe (Lazy a, m a))
   
+||| The type of a "step" in a monadic nondeterministic computation
+||| @ m The inner monad (somewhat confusingly, this is the *global* state)
+||| @ a The result
 covering
 public export 
-data MStep : forall k. (k -> Type) -> k -> Type where 
-    MOne : a -> MStep m a
-    MApp : Lazy (MStep m a) -> m (MStep m a) -> MStep m a
+data StepT : forall k. (m : k -> Type) -> (a : k) -> Type where 
+    ||| Yield exactly one result
+    ||| @r The result
+    MOne : (r : a) -> StepT m a
+    ||| Yield two sets of results.
+    ||| @c0 the first set, should be lazy 
+    ||| @c1 the second set, should be behind a monad
+    MApp : (c0 : Lazy (StepT m a)) -> (c1 : m (StepT m a)) -> StepT m a
+ 
+||| Monadically returns a `Maybe` value.
+||| If there should not be any results, the result is @pure Nothing@
+||| If there should be a result, return a `StepT` containing that set
 public export 
-MList : (Type -> Type) -> Type -> Type
-MList m a = m (Maybe (MStep {k = Type} m a))
+ListT : (m : Type -> Type) -> (a : Type) -> Type
+ListT m a = m (Maybe (StepT {k = Type} m a))
 
+||| A `ListT` that must yield at least one result, ie, without an inner `Maybe`
 public export 
-MList1 : (Type -> Type) -> Type -> Type
-MList1 m a = m (MStep {k = Type} m a)
+ListT1 : (Type -> Type) -> Type -> Type
+ListT1 m a = m (StepT {k = Type} m a)
 
 ||| The core List Monad Transformer
 ||| Fundementally, this behaves as a wrapper around a list with monadic actions at each cons application
 ||| Thereby, the inner monad is the global state.
-||| Somewhat confusingly, to get local state, we must do 
+||| Somewhat confusingly, to get local state, we must do the outer monad
 ||| @m the inner monad 
 ||| @a the result
 public export 
 data ChoiceT : (m : Type -> Type) -> (a : Type) -> Type where 
-    MkChoiceT : MList m a -> ChoiceT m a
-  
+    MkChoiceT : ListT m a -> ChoiceT m a
+
+||| A smart constructor for `ChoiceT`  
 public export
-mkChoiceT : MList m a -> ChoiceT m a
+mkChoiceT : ListT m a -> ChoiceT m a
 mkChoiceT = MkChoiceT
+
+||| Run a `ChoiceT` monad transformer, giving the inner value
 public export
-runChoiceT : ChoiceT m a -> MList m a
+runChoiceT : ChoiceT m a -> ListT m a
 runChoiceT (MkChoiceT x) = x
 
+||| Consume a `ChoiceT` monad transformer, yielding all results in the inner monad
 public export covering
+%spec m
 consumeChoiceT : Monad m => ChoiceT m a -> m (List a)
 consumeChoiceT (MkChoiceT x) = case !x of
     Nothing => pure []
@@ -45,34 +63,38 @@ consumeChoiceT (MkChoiceT x) = case !x of
       start <- consumeChoiceT $ MkChoiceT $ pure $ Just v
       rest <- consumeChoiceT $ MkChoiceT $ Just <$> xs 
       pure (start ++ rest)  
-public export
-interface (Functor m, Applicative m, Monad m) => MonadChoice m where 
-  ||| "Look" into the inner state of the monad
-  look : forall a. m a -> m (Maybe (Lazy a, m a))
-  ||| "Give" into the inner state of the monad.
-  give : forall a. m (Maybe (Lazy a, m a)) -> m a
-  ||| The Prolog cut, `!`, that is, if something yields some number of results make it yield one or zero
-  cut : forall a. m a -> m a
-  cut m = do 
-    m' <- look m
-    case m' of
-      Nothing => give $ pure Nothing
-      Just (v, _) => do 
-        e <- give $ pure Nothing
-        z <- give $ pure $ Just (v , e)
-        pure z
 
   
+||| The arrow of choices, that is, `a +> b`
 public export 
-ChoiceTArrow : (Type -> Type) -> Type -> Type -> Type
-ChoiceTArrow m a b = a -> (ChoiceT m b)
-
-  
+ChoiceArrow : {m : Type -> Type} -> Type -> Type -> Type
+ChoiceArrow a b = a -> (ChoiceT m b)
+ 
 public export 
 Choice : Type -> Type
 Choice = ChoiceT Simple
 
+
+||| `ChoiceT` equipped with a local state 
+||| @t the type of the local state
+||| @m the type of the global state
+||| @a the type of the result  
+public export 
+Line : (t : (Type -> Type) -> Type -> Type) -> (m : Type -> Type) -> (a : Type) -> Type
+Line t m a = t (ChoiceT m) a
+
+public export covering
+[unfill] Monad m => Cast (ListT1 m a) (ListT m a) where
+  cast l = Just <$> l
   
 public export 
-Context : (t : (Type -> Type) -> Type -> Type) -> (m : Type -> Type) -> (a : Type) -> Type
-Context t m a = t (ChoiceT m) a
+[listChoice] Cast (ListT m a) (ChoiceT m a) where 
+  cast l = MkChoiceT l
+public export 
+[choiceList] Cast (ChoiceT m a) (ListT m a) where 
+  cast (MkChoiceT v) = v
+  
+public export covering
+[unfillChoice] Monad m => Cast (ListT1 m a) (ChoiceT m a) where 
+  cast l = cast @{listChoice} $ cast @{unfill} l
+

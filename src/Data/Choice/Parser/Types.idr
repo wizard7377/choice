@@ -17,7 +17,7 @@ Stream String Char where
     _ => Nothing
   isEmpty = null . unpack
 
-interface MonadParser m where
+--interface MonadParser m where
 Parser : (global : Type -> Type) -> (local : Type -> Type) -> (stream : Type) -> (error : Type) -> (action : Type) -> Type
 Parser global local stream error action = StateT stream (ChoiceT global) (local (Either error action))
 {- 

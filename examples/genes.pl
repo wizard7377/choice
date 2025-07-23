@@ -1,0 +1,10 @@
+
+nat(z).
+nat(s(N)) :- nat(N).
+:- op(700, xfx, (#=)).
+A #= B :- A == B.
+A #= C :- A #= B, B #= C.
+s(A) #= s(B) :- A #= B.
+add(A,s(B)) #= C :- s(add(A,B)) #= C.
+add(A,z) #= A.
+add(A,B) #= add(B,A).
