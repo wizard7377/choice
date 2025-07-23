@@ -8,17 +8,15 @@ The `Choice` Monad Transformer is based heavily off of the work done on the Hask
 > [!TIP]
 > More in depth information may be found on the [Github pages](https://wizard7377.github.io/choice/)
 
-## The basic internal structure
+## Combinatory logic, or the Theory of Everything 
 
-The `Choice` monad transformer, has essientally the following signature (this isn't how it's implemented, but it's close enough)
-```idris
-Choice : (Type -> Type) -> Type -> Type where 
-    MkChoice : m (Maybe (a, Choice m a)) -> Choice m a
-```
-While this might seem strange at first, this is actually a somewhat simple coroutine.
-First, let's look at a specific instance of this, for instance, this on `IO` is 
-```idris
-ChoiceIO : Type -> Type where 
-    MkChoiceIO : IO (Maybe (a, ChoiceIO a)) -> ChoiceIO a
-```
-This is much clearer! Essentially, the `Choice` Monad allows us to get one result from the `Choice`, and then returns that value and the remaining `Choice` inside the inner monad. To recover the list of choices, we simply run this until `Choice` returns nothing
+The abilty of `ChoiceT` is that of being able to wrap around *global* state. That is, `ChoiceT (State s) a` represents a computation with a *global* state `s`. If we wanted to add a local state, we would then do `StateT t (ChoiceT (State s)) a`. 
+
+TODO: Needs a better example
+
+## 
+The ability of monads to allow us to consider the context of values "as we need them", is quite useful. Indeed, monads like `State` and `Writer` allow us to avoid writing impure code by cleverly using pure code inside a monad.
+
+There are many monads that exist, from `Parser`s, to `Maybe`, there are really quite a few. However, one of the most useful properties of most monads is their ability to *transform*. That is, allow us to reason about a monadic `State` with a monadic `Output` together.
+
+However, there is one monad that lacks this ability, at least on its surface: the `List` monad. While 

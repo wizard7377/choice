@@ -19,11 +19,11 @@ readme = "README.md"
 modules =
 	Data.Simple,
 	Data.Choice,
-	Data.Choice.Types,
-	Data.Choice.Instances,
-	Data.Choice.Combinators,
-	Data.Choice.Proof,
-	Data.Choice.Internal
+	Data.Choice.Alt.Types,
+	Data.Choice.Alt.Instances,
+	Data.Choice.Alt.Combinators,
+	Data.Choice.Alt.Proof,
+	Data.Choice.Class
 
 -- main file (i.e. file to load at REPL)
 -- main =

@@ -1,8 +1,8 @@
-module Data.Choice.Parser.Types
+module Data.Choice.Alt.Parser.Types
  
-import Data.Choice.Types
-import Data.Choice.Combinators
-import Data.Choice.Instances as Instances
+import Data.Choice.Alt.Types
+import Data.Choice.Alt.Combinators
+import Data.Choice.Alt.Instances as Instances
 import Control.Monad.State
  
 interface Eq tok => Stream s tok where 
@@ -17,7 +17,7 @@ Stream String Char where
     _ => Nothing
   isEmpty = null . unpack
 
-interface MonadParser m where
+--interface MonadParser m where
 Parser : (global : Type -> Type) -> (local : Type -> Type) -> (stream : Type) -> (error : Type) -> (action : Type) -> Type
 Parser global local stream error action = StateT stream (ChoiceT global) (local (Either error action))
 {- 

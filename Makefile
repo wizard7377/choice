@@ -1,6 +1,6 @@
 cg ?= chez
 pack ?=
-all: build install test
+opts ?= 
 
 build: banner
 	@echo ""
@@ -8,7 +8,7 @@ build: banner
 	@echo "Building..."
 	@echo "==========="
 	@echo ""
-	pack $(pack) --cg $(cg) build choice.ipkg
+	pack $(pack) --cg $(cg) --extra-args="$(opts)" build choice.ipkg
 
 install: build
 	@echo ""
@@ -24,9 +24,26 @@ test: install
 	@echo "Running tests..."
 	@echo "================"
 	@echo ""
-	pack $(pack) --cg $(cg) build test/test.ipkg
+	pack $(pack) --cg $(cg) --extra-args="$(opts)" build test/test.ipkg
 	@echo ""
-	pack $(pack) --cg $(cg) run test/test.ipkg
+	pack $(pack) --cg $(cg) --extra-args="$(opts)" run test/test.ipkg
+
+bench : opts += --profile --timing 5
+bench: install
+	@echo ""
+	@echo "================================"
+	@echo "Running tests with benchmarks..."
+	@echo "================================"
+	@echo ""
+	@rm choice-test.ss.html
+	@rm profile.html
+	@rm -rf profile 
+	mkdir profile
+	pack $(pack) --cg $(cg) --extra-args="$(opts)" build test/test.ipkg
+	@echo ""
+	pack $(pack) --cg $(cg) --extra-args="$(opts)" run test/test.ipkg
+	mv choice-test.ss.html profile.html profile
+
 
 docs: build
 	@echo ""
@@ -44,9 +61,13 @@ banner:
 	@echo "Code generation: $(cg)"
 	@echo "==================="
 	@echo ""
-
+	# pack $(pack) --cg $(cg) run test/test.ipkg
 clean: 
 	rm -f -r build 
 	rm -f -r test/build
 	rm -f -r docs/files
 	mkdir docs/files
+	pack clean 
+	
+
+all: build install test

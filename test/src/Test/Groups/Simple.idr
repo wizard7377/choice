@@ -4,7 +4,7 @@ import Data.Choice
 import Test.Helper
   
 testSizeAt : Nat 
-testSizeAt = 100
+testSizeAt = 64
 simpleTestA' : Nat -> Choice Nat
 simpleTestA' n = do 
   x <- C.split $ pure [0..n]
@@ -24,7 +24,7 @@ compareTestA' n = do
 simpleTestA : IO ()
 simpleTestA = do 
   (timeTest "SimpleTestA" (simpleTestA' testSizeAt))
-  (testDebug "SimpleTestA" (showResults (simpleTestA' testSizeAt)))
+  --(testDebug "SimpleTestA" (showResults (simpleTestA' testSizeAt)))
 
 compareTestA : IO ()
 compareTestA = do

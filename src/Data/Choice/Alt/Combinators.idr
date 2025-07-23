@@ -1,7 +1,7 @@
-module Data.Choice.Combinators 
+module Data.Choice.Alt.Combinators 
 
-import Data.Choice.Types
-import Data.Choice.Instances
+import Data.Choice.Alt.Types
+import Data.Choice.Alt.Instances
   
   
 namespace C 
