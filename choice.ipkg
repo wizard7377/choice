@@ -17,13 +17,13 @@ readme = "README.md"
 
 -- modules to install
 modules =
-	Data.Simple,
-	Data.Choice,
-	Data.Choice.Alt.Types,
-	Data.Choice.Alt.Instances,
-	Data.Choice.Alt.Combinators,
-	Data.Choice.Alt.Proof,
-	Data.Choice.Class
+	Control.Monad.Simple,
+	Control.Monad.Alternative,
+	Control.Monad.Alternative.Choice.Types,
+	Control.Monad.Alternative.Choice.Instances,
+	Control.Monad.Alternative.Choice.Combinators,
+	Control.Monad.Alternative.Choice.Proof,
+	Control.Monad.Alternative.Class
 
 -- main file (i.e. file to load at REPL)
 -- main =

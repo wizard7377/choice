@@ -1,8 +1,8 @@
-module Data.Choice.Alt.Parser.Types
+module Control.Monad.Alternative.Choice.Parser.Types
  
-import Data.Choice.Alt.Types
-import Data.Choice.Alt.Combinators
-import Data.Choice.Alt.Instances as Instances
+import Control.Monad.Alternative.Choice.Types
+import Control.Monad.Alternative.Choice.Combinators
+import Control.Monad.Alternative.Choice.Instances as Instances
 import Control.Monad.State
  
 interface Eq tok => Stream s tok where 

@@ -3,6 +3,7 @@ module Data.Morph
 import Control.Monad.State
 import Control.Monad.Writer
 
+public export
 hoistType : ((Type -> Type) -> Type -> Type) -> Type
 hoistType t = {m : Type -> Type} -> {n : Type -> Type} -> {a : Type} -> Monad m => Monad n => ({any : Type} -> m any -> n any) -> t m a -> t n a
 public export 

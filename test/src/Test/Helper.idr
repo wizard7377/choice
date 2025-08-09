@@ -3,7 +3,7 @@ module Test.Helper
 import System
 import System.Clock
 import Data.List
-import Data.Choice
+import Control.Monad.Alternative
 forceIO : (_ : a) -> IO ()
 forceIO _ = pure ()
 
