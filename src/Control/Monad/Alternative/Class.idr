@@ -1,4 +1,4 @@
-module Data.Choice.Class
+module Control.Monad.Alternative.Class
 
 import Data.Morph
 import Control.Monad.Trans
@@ -28,6 +28,10 @@ interface (Functor m, Applicative m, Monad m) => MonadChoice m where
       YieldMany x y => cut x
       m'' => give $ pure m''
 
+
+public export 
+interface Alternative m => Monad m => MonadLogic m where 
+  split : m a -> m (Maybe (a, m a))
 
 (MonadFunctor t, MonadChoice m, MonadTrans t, Monad (t m)) => MonadChoice (t m) where
   give = ?h0

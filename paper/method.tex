@@ -1,116 +1,27 @@
 \section{Free Choice}
 
-The solution to all the above problems was to create a Choice Monad Transformer, closely based off the design of the \verb|logict| package in Haskell and it's \verb|LogicT| \cite{logict}.
-However, while this is based off of that package, there are some major differences.
-First, however, let us compare the regular List and the \verb|LogicT|
+The \href{https://github.com/wizard7377/choice}{choice} library defines 3 different implementations of a list monad, all of which capture "global state".
+The first two of these are \verb|LogicT|, based off the \needlink\needcite \verb|LogicT| Haskell package.
+the second being \verb|ListT| based off the \needlink\needcite \verb|ListT| Haskell package.
 
-\todo{Cleanup formatting}
+Both of these packages capture the notion of "free" \verb|Foldable|, with \verb|LogicT| doing so through continutaions, and \verb|ListT| doing so with monoidal structure.
 
-\begin{minted}{idris}
-	data List : Type -> Type where 
-		Nil : List a
-		(::) : a -> List a -> List a
-\end{minted}
+However, here we also create a novel \emph{tree} based approach to a list monad. 
+Firstly, the definition of it is as follows: 
 
 \begin{minted}{idris}
-data LogicT : (Type -> Type) -> Type -> Type where 
-	MkLogicT : 
-		(forall r. 
-			(a -> m r -> m r) 
-			-> m r 
-			-> m r
-		) 
-		-> LogicT m a
-		
-unLogicT : 
-	LogicT m a
-	-> (forall r. 
-		(a -> m r -> m r) 
-		-> m r 
-		-> m r
-		) 
-		
-\end{minted}
-\footnote{Ported to Idris}
 
-While these two definitions might look unrelated at first, if we take the seemingly strange step of doing \verb|foldr|, on a \verb|List|, we get something of the form 
-\begin{minted}{idris}
-	foldr {t = List} : (a -> r -> r) -> r -> List ea -> r	
-\end{minted}
-
-and flipping around the order of parameters we get
-\begin{minted}{idris}
-	foldr {t = List} : List a -> (a -> r -> r) -> r -> r	
-\end{minted}
-
-which looks shockingly similar to 
-\begin{minted}{idris}
-	unLogicT :
-		LogicT m a
-		-> (forall r. 
-		(a -> m r -> m r) 
-		-> m r 
-		-> m r
-		) 
-\end{minted}
-
-Indeed, the only difference are the presence of the type \verb|m|.
-This works because we can then pass in, if \verb|m = Identity|, \verb|::| and \verb|Nil| to recover a list:
-\begin{minted}{idris}
-	unLogicT :
-	LogicT Identity a
-	-> (forall r. 
-	(a -> Identity r -> Identity r) 
-	-> Identity r 
-	-> Identity r
-	) 
-\end{minted}
-
-Then, simplifying this by $\mathrm{Identity t} \Rightarrow \mathrm{t}$ and \verb|Logic = LogicT Identity|, we get 
-\begin{minted}{idris}
-	unLogic :
-	Logic a -> (forall r. (a -> r -> r) -> r -> r) 
-\end{minted}
-
-Which, given universal introduction and elimination (that $\forall x . (A \to B) \rhd (\forall x . A) \to (\forall x . B)$ and that $\forall x . A \rhd A$ given that $x$ does not occur in $A$), is equal to \verb|foldr|.
-That is, \verb|LogicT| provides a way to fold together computations.
-
-\subsection{The Cons of Folding}
-
-While this implementation is quite nice, it suffers from a couple problems
-\begin{enumerate}
-	\item Its use of Continuation Passing Style (CPS) means that its much more complex to compile\needcite 
-	\item CPS makes the code harder to understand\needcite 
-	\item CPS makes the code harder to debug
-	\item It can lead to code that is hard to make monomorphic ($r$ only appears on the left hand side)
+data TreeT : forall k0, k1. (m : k0 -> k1) -> (a : k0) -> Type where 
+	MLeaf : (r : Lazy (List a)) -> TreeT m a
+	MBranch : (c0 : (TreeT m a)) -> (c1 : m (TreeT m a)) -> TreeT m a
 	
-\end{enumerate}
+ChoiceT1 : forall k. (Type -> k) -> Type -> k 
+ChoiceT1 m a = m (TreeT {k0 = Type} m a)
 
-Because of this, here, we propose \verb|ChoiceT|, a List Monad Transformer that does not use CPS, is fully monomorphic, is intutive to understand, and an extension, rather than proxy, for regular Lists.
-
-\subsection{Choice as a List}
-
-The \verb|ChoiceT| monad transformer is defined in terms of one other type, \verb|MStep|, which is devised as follows:
-
-\begin{minted}{idris}
-	
-
-
-data MStep : (Type -> Type) -> Type -> Type where 
-	MNil : MStep m a
-	MCons : a -> m (MStep m a) -> MStep m a
-
-data ChoiceT : (Type -> Type) -> Type -> Type where 
-	MkChoiceT : m (MStep m a) -> ChoiceT m a
+data ChoiceT : forall k. (m : Type -> k) -> (a : Type) -> Type where 
+	MkChoiceT : ChoiceT1 m a -> ChoiceT m a
 	
 \end{minted}
-\footnote{The package itself creates a helper type alias, \textrm{MList}, and has \textrm{MStep} be kind polymorhpic.
-	For simplicites sake, these are both changed to improve readability.}
 	
-In short, \verb|ChoiceT| works by allowing for "delimited continuations in lists".
-That is, while in a regular list you can retrive values until you get to the end of the list (which allows you to have arbitrarly long list pattern matches) \verb|MStep| wraps each succesive action in a monadic context, \verb|m|.
-
-Note also that because of how they are defined, \verb|MStep| does \emph{not} have any context on its first value.
-This is where \verb|MkChoiceT| comes in, allowing us to "wrap" \verb|MStep| itself in the monadic context, thereby creating a true list monad.
-
-	
+First, \verb|TreeT| defines a binary tree like structure.
+Note that this is almost the exact same as the \verb|StepT| from \verb|ListT|, with \verb|StepT| being

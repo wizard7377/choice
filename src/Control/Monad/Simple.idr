@@ -1,4 +1,4 @@
-module Data.Simple  
+module Control.Monad.Simple  
  
 public export
 Simple : Type -> Type
