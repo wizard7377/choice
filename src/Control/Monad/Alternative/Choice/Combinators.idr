@@ -1,9 +1,10 @@
-module Data.Choice.Alt.Combinators 
+module Control.Monad.Alternative.Choice.Combinators 
 
-import Data.Choice.Alt.Types
-import Data.Choice.Alt.Instances
+import Control.Monad.Alternative.Choice.Types
+import Control.Monad.Alternative.Choice.Instances
+import Control.Monad.Alternative.Class
   
-  
+{- 
 namespace C 
 
   ||| ⊥
@@ -59,3 +60,4 @@ namespace C
   not m = case !(look m) of 
     Nothing => give $ pure $ Just ((), give $ pure Nothing)
     Just (x, xs) => give $ pure Nothing
+-}

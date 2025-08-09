@@ -1,6 +1,6 @@
 module Test.Groups.Simple
   
-import Data.Choice
+import Control.Monad.Alternative
 import Test.Helper
   
 testSizeAt : Nat 

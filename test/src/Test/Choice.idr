@@ -1,6 +1,6 @@
 module Test.Choice
 
-import Data.Choice
+import Control.Monad.Alternative
   
 public export
 Choice' : Type -> Type

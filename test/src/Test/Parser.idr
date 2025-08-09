@@ -1,6 +1,6 @@
 module Test.Parser
   
-import Data.Choice
+import Control.Monad.Alternative
 import Control.Monad.State
   
 ParserT : (Type -> Type) -> Type -> Type
