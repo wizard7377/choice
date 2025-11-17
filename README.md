@@ -1,5 +1,8 @@
 # Choice: The List Monad Transformer 
 
+> [!CAUTION]
+> Development has been moved to [idris-logic](https://github.com/wizard7377/idris-logic)
+
 A List Monad Transformer for Idris, intended for real world use.
 
 The interface for this consists of two main types, the `Choice` Monad transformer and the `MonadChoice` class.
